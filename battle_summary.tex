@@ -1,0 +1,65 @@
+\documentclass[pdftex,...]{article}% the pdftex is essential
+\usepackage[dvips]{graphicx}            % to include images
+\usepackage{pslatex}    % to use PostScript fonts
+\usepackage[margin=0.5in]{geometry}
+\usepackage{caption}
+\usepackage{longtable}
+
+% The following two lines make underscores a non-special character.  Use \sb for subscripting.
+\usepackage[T1]{fontenc}
+\catcode`\_=12
+
+\newcommand{\onegameT}[1]{
+    \begin{minipage}{\linewidth}
+        \centering
+        \captionof{table}{#1} \label{tab:title}
+        \begin{tabular}{cc}
+            \includegraphics[width=0.5\linewidth]{#1} &
+            \begin{tabular}[b]{ccccc}
+                Turn & Player & Move & Judge & Time\\
+                \hline
+                \input{#1_moves.tex}
+                \hline
+            \end{tabular}
+        \end{tabular}
+    \end{minipage}
+}
+
+\newcommand{\onegame}[1]{
+   % #1 %\captionof{table}{#1} \label{tab:title}
+    \begin{tabular}{c}
+    #1 \\
+    \begin{tabular}{cc}
+        \includegraphics[width=0.5\linewidth]{#1} &
+        \begin{tabular}[b]{ccccc}
+            Turn & Player & Move & Judge & Time\\
+            \hline
+            \input{#1_moves.tex}
+            \hline
+        \end{tabular}
+    \end{tabular}
+    \end{tabular}
+}
+\begin{document}
+%\begin{longtable}{p{.50\textwidth} p{.50\textwidth}}
+%    \onegame{battle_20170606_104039.225522/abbot_vs_adam} &
+%    \onegame{battle_20170606_104039.225522/abbot_vs_arael} \\
+%    \onegame{battle_20170606_104039.225522/abbot_vs_armisael} &
+%    \onegame{battle_20170606_104039.225522/abbot_vs_Balogna} \\
+%%    \input{all_games}
+%\end{longtable}
+%\resizebox{\textwidth}{!}{ % Scales the contents to fit the width of the page
+%    \begin{tabular}{c}
+%        \input{all_games}
+%    \end{tabular}
+%}
+\begin{tabular}[b]{ccccc}
+    Player & Victories & Wins & Losses & Errors \\
+    \hline
+    \input{summary.tex}
+    \hline
+\end{tabular}
+
+\input{all_games}
+
+\end{document}

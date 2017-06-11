@@ -67,7 +67,15 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy
 import math
 import pprint
-logger = logging.Logger("yavalath")
+import pathlib
+import datetime
+import time
+import os
+import summary_results
+
+
+logger = logging.Logger("yavalath_engine")
+
 
 # http://www.cameronius.com/games/yavalath/
 # http://www.nestorgames.com/docs/YavalathCo2.pdf
@@ -82,6 +90,7 @@ class MoveResult(Enum):
     DRAW = 3
     ILLEGAL_MOVE = 4
     CONTINUE_GAME = 5
+    ERROR_WHILE_MOVING = 6
 
 
 class HexBoard:
@@ -98,8 +107,10 @@ class HexBoard:
 
     def next_space(self, space, axis, distance):
         assert axis in (-1, 0, 1), "Axis must be -1, 0, or 1"
+        if distance == 0:
+            return space
         letter, num = list(space)
-        rank_offset = axis*distance
+        rank_offset = axis * distance
         if axis == 0:
             file_offset = distance
         elif axis == 1:
@@ -121,44 +132,62 @@ class HexBoard:
             elif distance < 0 and letter < "e":
                 file_offset = min(0, distance + (ord("e") - ord(letter)))
 
-        result = "{}{}".format(chr(ord(letter)+rank_offset), int(num)+ file_offset)
+        try:
+            result = "{}{}".format(chr(ord(letter) + rank_offset), int(num) + file_offset)
+        except:
+            print("Failed for {}".format((space, axis, distance)))
+            raise
         return result if result in self.spaces else None
+
+    def next_space_in_dir(self, space, direction, distance=1):
+        """A convenience function to get the next space in one of the 6 directions."""
+        assert direction in range(6), "Directions are numbered 0..5"
+        lookup = [(0, 1), (1, 1), (-1, -1), (0, -1), (1, -1), (-1, 1)]
+        axis, distance_factor = lookup[direction]
+        return self.next_space(space, axis, distance * distance_factor)
+
 
 class Render:
     def __init__(self, board, moves):
         self.board = board
-        self.edge_spaces = 5 # Maybe should be part of the board
+        self.edge_spaces = 5  # Maybe should be part of the board
         self.moves = moves
-        if self.moves[1] == "swap":
+        if len(self.moves) > 1 and self.moves[1] == "swap":
             self.moves[1] = moves[0]
             self.moves[0] = None
         self.X_moves = list(self.moves[i] for i in range(0, len(moves), 2))
         self.Y_moves = list(self.moves[i] for i in range(1, len(moves), 2))
         self.image_size = 512
         self.border_size = 10
-        self.y_border_size = (self.image_size - (self.image_size - 2*self.border_size) * math.sqrt(3) / 2) / 2
+        self.y_border_size = (self.image_size - (self.image_size - 2 * self.border_size) * math.sqrt(3) / 2) / 2
         self.gap_size = 5
-        self.radius = (self.image_size - 2*self.border_size - self.gap_size*(self.edge_spaces*2 - 2)) / (self.edge_spaces*2 - 1) / 2
+        self.radius = (self.image_size - 2 * self.border_size - self.gap_size * (self.edge_spaces * 2 - 2)) / (
+        self.edge_spaces * 2 - 1) / 2
 
     def move_to_coord(self, move):
         rank, file = list(move)
         rank = ord(rank) - ord('a')
         file = int(file)
         y = rank
-        x = 2*(file-1) + abs(rank-(self.edge_spaces-1))
+        x = 2 * (file - 1) + abs(rank - (self.edge_spaces - 1))
         return (x, y)
 
     def render_ascii(self):
         grid_height = self.edge_spaces * 2 - 1
-        grid_width = grid_height * 2 - 1 # Added room for whitespace
+        grid_width = grid_height * 2 - 1  # Added room for whitespace
         rows = [[" " for i in range(grid_width)] for j in range(grid_height)]
+
         def render_moves(moves, token):
             for move in moves:
                 x, y = self.move_to_coord(move)
                 try:
                     rows[y][x] = token
                 except Exception as ex:
-                    logger.error("Failed to update (x,y): {}, {}, but len(rows)={} and len(rows[y])={}".format(x,y,len(rows),None if y >= len(rows) else len(rows[y])))
+                    logger.error(
+                        "Failed to update (x,y): {}, {}, but len(rows)={} and len(rows[y])={}".format(x, y, len(rows),
+                                                                                                      None if y >= len(
+                                                                                                          rows) else len(
+                                                                                                          rows[y])))
                     self.move_to_coord(move)
 
         render_moves(self.board.spaces, ".")
@@ -175,8 +204,9 @@ class Render:
         rank_count = self.edge_spaces * 2 - 1
         x, y = self.move_to_coord(move)
         x /= 2
-        center_x = self.border_size + (self.image_size - 2*self.border_size) * x / rank_count + self.radius
-        center_y = self.y_border_size + ((self.image_size - 2*self.border_size) * y / rank_count)*math.sqrt(3)/2 + self.radius
+        center_x = self.border_size + (self.image_size - 2 * self.border_size) * x / rank_count + self.radius
+        center_y = self.y_border_size + ((self.image_size - 2 * self.border_size) * y / rank_count) * math.sqrt(
+            3) / 2 + self.radius
         return numpy.array([center_x, center_y])
 
     def render_moves(self, image, moves, R, color):
@@ -191,15 +221,14 @@ class Render:
             if move is None:
                 continue
             center = self.board_space_to_image_point(move)
-            box = self.bounding_box(center, self.radius)
             w, h = draw.textsize(str(turn), font=text_font)
-            draw.text((center[0] - w/2, center[1] - h/2), str(turn), font=text_font, fill=color)
+            draw.text((center[0] - w / 2, center[1] - h / 2), str(turn), font=text_font, fill=color)
 
     def render_image(self, filename):
         image = Image.new("RGB", (self.image_size, self.image_size), "white")
-        self.render_moves(image, self.board.spaces, self.radius/5, "gray")
-        self.render_moves(image, self.X_moves, self.radius, "black")
-        self.render_moves(image, self.Y_moves, self.radius, "white")
+        self.render_moves(image, self.board.spaces, self.radius / 5, "gray")
+        self.render_moves(image, self.Y_moves, self.radius, "black")
+        self.render_moves(image, self.X_moves, self.radius, "white")
         self.render_turns(image, self.moves, "gray")
         image.save(filename)
 
@@ -212,7 +241,7 @@ class Render:
             center = self.board_space_to_image_point(space)
             box = self.bounding_box(center, self.radius)
             w, h = draw.textsize(space, font=text_font)
-            draw.text((center[0] - w/2, center[1] - h/2), space, font=text_font, fill="black")
+            draw.text((center[0] - w / 2, center[1] - h / 2), space, font=text_font, fill="black")
         image.save(filename)
 
 
@@ -223,10 +252,10 @@ def _connected_along_axis(board, move, other_moves, axis):
     assert axis in (-1, 0, 1), "Axis must be -1, 0, or 1"
 
     pos_dist = 0
-    while board.next_space(move, axis, pos_dist+1) in other_moves:
+    while board.next_space(move, axis, pos_dist + 1) in other_moves:
         pos_dist += 1
     neg_dist = 0
-    while board.next_space(move, axis, neg_dist-1) in other_moves:
+    while board.next_space(move, axis, neg_dist - 1) in other_moves:
         neg_dist -= 1
     return pos_dist - neg_dist + 1
 
@@ -242,7 +271,7 @@ def judge_next_move(game_history, move):
         return MoveResult.ILLEGAL_MOVE
 
     # Extract just this player's moves
-    players_moves = list([game_history[-i] for i in range(2, len(game_history)+1, 2)])
+    players_moves = list([game_history[-i] for i in range(2, len(game_history) + 1, 2)])
     if "swap" in players_moves:
         players_moves.append(game_history[0])
 
@@ -270,9 +299,17 @@ def play_two_player_yavalath(player1, player2):
     game_history = list()
     game_over = False
     while not game_over:
-        for player in (player1, player2):
-            move = player(board, game_history)
-            move_result = judge_next_move(game_history, move)
+        for player in [player1, player2]:
+            exception = None
+            try:
+                move = player(board, game_history)
+            except Exception as ex:
+                exception = ex
+                move = "ERROR"
+            if exception is not None:
+                move_result = MoveResult.ERROR_WHILE_MOVING
+            else:
+                move_result = judge_next_move(game_history, move)
             game_over = (move_result != MoveResult.CONTINUE_GAME)
             game_history.append(move)
             if game_over:
@@ -280,26 +317,98 @@ def play_two_player_yavalath(player1, player2):
     return game_history, move_result
 
 
-def random_player(board, game_so_far):
-    return random.choice(list(set(board.spaces) - set(game_so_far)))
+def load_module(filename):
+    import importlib.util
+    import pathlib
+    try:
+        module_name = pathlib.Path(filename).name.replace(".py", "")
+        spec = importlib.util.spec_from_file_location(module_name, filename)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        #print("loaded: {}".format(module.__name__))
+        # 'get_player_names' and 'get_player' required
+        return module.__name__, module.get_player_names, module.get_player
+    except Exception as ex:
+        print("Failed to load module {} from file {}".format(module_name, filename))
+        print(ex)
+    return None, None, None
+
+
+def battle_round(p1name, p1maker, p2name, p2maker, output_dir):
+    board = HexBoard()
+    with open("{}/{}_vs_{}.log".format(output_dir, p1name, p2name), "w") as game_log:
+        player1 = p1maker(p1name)
+        player2 = p2maker(p2name)
+        game_history = list()
+        game_over = False
+        print("Yavalath, {} vs {}, starting at {}".format(p1name, p2name, datetime.datetime.now()), file=game_log)
+        while not game_over:
+            for player_name, player in [(p1name, player1), (p2name, player2)]:
+                last_to_move = player_name
+                try:
+                    before = time.time()
+                    move = player(game_history)
+                    after = time.time()
+                    turn_time = after - before
+                    print("Turn {} by {} moves at {}.  Time to decide: {:.03f}s".format(len(game_history), player_name, move, turn_time), file=game_log)
+                except Exception as ex:
+                    print("Exception while taking a turn by {}".format(player_name), file=game_log)
+                    print("Exception:{}".format(ex), file=game_log)
+                    game_over = True
+                    move_result = MoveResult.ERROR_WHILE_MOVING
+                    break
+                move_result = judge_next_move(game_history, move)
+                print("  Judge says: {}".format(move_result), file=game_log)
+                game_log.flush()
+                game_over = (move_result != MoveResult.CONTINUE_GAME)
+                if move_result != MoveResult.ILLEGAL_MOVE:
+                    game_history.append(move)
+                if game_over:
+                    break
+        print("Full Game:{}".format(game_history), file=game_log)
+        print("{} was last to move: {}".format(last_to_move, move_result), file=game_log)
+        if len(game_history) > 0 and game_history[-1] not in board.spaces:
+            moves_to_render = game_history[:-1]
+        else:
+            moves_to_render = game_history
+        renderer = Render(HexBoard(), moves_to_render)
+        renderer.render_image("{}/{}_vs_{}.png".format(output_dir, p1name, p2name))
+
+
+def battle(module_paths):
+    modules = [load_module(filename) for filename in module_paths]
+    modules = [(name, get_player_names, get_player) for name, get_player_names, get_player in modules if name is not None]
+    for name, get_player_names, get_player in modules:
+        print("Module joined: {}, with players {}".format(name, get_player_names()))
+
+    player_info = list()
+    #random.shuffle(modules)
+    for module_name, get_player_names, get_player in modules:
+        for player_name in get_player_names():
+            player_info.append((player_name, get_player))
+
+    board = HexBoard()
+    output_dir = "battle_{}".format(str(datetime.datetime.now()).replace(":", "").replace("-","").replace(" ", "_"))
+    os.makedirs(output_dir)
+
+    for p1info, p2info in itertools.combinations(player_info, r=2):
+        p1_name, get_p1_fn = p1info
+        p2_name, get_p2_fn = p2info
+        print("{} vs. {}".format(p1_name, p2_name))
+        battle_round(p1_name, get_p1_fn, p2_name, get_p2_fn, output_dir)
+        print("{} vs. {}".format(p2_name, p1_name))
+        battle_round(p2_name, get_p2_fn, p1_name, get_p1_fn, output_dir)
+
+    summary_results.summarize(output_dir)
 
 
 def main():
-    import pprint
-    game, result = play_two_player_yavalath(random_player, random_player)
-    #pprint.pprint(game)
-    #pprint.pprint(result)
+    module_names = [p.as_posix() for p in pathlib.Path("players").iterdir() if p.is_file()]
+    module_names = ["players/darryl_player.py", "players/random_player.py"]
 
-    # for turn in range(2, len(game)):
-    #     renderer = Render(HexBoard(), game[0:turn])
-    #     print("After Turn {}".format(turn))
-    #     print("Game so far:{}".format(game[0:turn]))
-    #     print(renderer.render_ascii())
-    #     renderer.render_image("game_render_{}.png".format(turn))
-    renderer = Render(HexBoard(), game)
-    renderer.render_image("game_render.png")
-    #renderer.render_spaces("game_board.png")
-    print(result, "on turn", len(game)-1)
+    while True:
+        battle(module_names)
+
 
 if __name__ == "__main__":
     main()
