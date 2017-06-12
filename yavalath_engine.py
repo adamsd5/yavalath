@@ -72,10 +72,11 @@ import datetime
 import time
 import os
 import summary_results
+import multiprocessing
+from functools import partial
 
-
-logger = logging.Logger("yavalath_engine")
-
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 # http://www.cameronius.com/games/yavalath/
 # http://www.nestorgames.com/docs/YavalathCo2.pdf
@@ -375,6 +376,67 @@ def battle_round(p1name, p1maker, p2name, p2maker, output_dir):
         renderer.render_image("{}/{}_vs_{}.png".format(output_dir, p1name, p2name))
 
 
+MEMORY_LIMIT = 1024*1024*1024*4  # Everyone gets 4GB
+#MEMORY_LIMIT = 1024*1024*100  # Everyone gets 4GB
+#TODO: Better reporting on the exact exception that was raised when a player failed to move.
+
+def player_in_process(child_conn, moudule_filename, player_name):
+    """This is the target of multiprocessing.Process, it should be able to communicate with the parent"""
+    import memorycontrol
+    memorycontrol.set_memory_limit(MEMORY_LIMIT)
+
+    try:
+        module_name, get_player_names, get_player = load_module(moudule_filename)
+        player = get_player(player_name)
+    except MemoryError as ex:
+        logging.error("MemoryError loading the module {} or get the player {}".format(module_name, player_name))
+        child_conn.close()
+        return
+    except:
+        logging.error("Failed to load the module {} or get the player {}".format(module_name, player_name))
+        child_conn.close()
+        return
+
+    while True:
+        try:
+            move_so_far = child_conn.recv()
+            exception = None
+            next_move = None
+            try:
+                next_move = player(move_so_far)
+                print("Child Process, PID:{}, player:{}, move_so_far:{} returning {}".format(
+                    os.getpid(), player_name, " ".join(move_so_far), next_move))
+            except Exception as ex:
+                exception = str(ex)
+            child_conn.send((next_move, exception))
+            if exception is not None:
+                break
+        except EOFError:
+            break
+
+
+def get_player_in_process(player_name, module_filename):
+    print("Getting process-controlled player {} from module {}".format(player_name, module_filename))
+    parent_conn, child_conn = multiprocessing.Pipe()
+    process = multiprocessing.Process(target=player_in_process, args=(child_conn, module_filename, player_name))
+    process.start()
+    child_conn.close()  # Close the child from the parent's end.
+
+    def player_whisperer(moves_so_far):
+        """This function runs in the main process game engine, to speak to the child process and ask for moves."""
+        logger.info("Parent sending moves to child.")
+        parent_conn.send(moves_so_far)
+        logger.info("Parent sent moves to child... waiting on response.")
+        next_move, exception = parent_conn.recv()
+        logger.info("Parent got back: {}".format((next_move, exception)))
+
+        if exception is not None:
+            raise RuntimeError("Child process had an exception: {}".format(exception))
+        return next_move
+
+    return player_whisperer
+
+
 def battle(module_paths):
     modules = [load_module(filename) for filename in module_paths]
     modules = [(name, get_player_names, get_player) for name, get_player_names, get_player in modules if name is not None]
@@ -401,14 +463,38 @@ def battle(module_paths):
 
     summary_results.summarize(output_dir)
 
+def battle_mp(module_paths):
+    # player_info should become a list of pairs: (name, getter) such that getter(name) returns a player callable
+    player_info = list()
+    for filename in module_paths:
+        moudle_name, get_player_names, get_player = load_module(filename)
+        player_names = get_player_names()
+        print("Module joined: {}, with players {}".format(moudle_name, player_names))
+        for player_name in player_names:
+            getter = partial(get_player_in_process, module_filename=filename)
+            player_info.append((player_name, getter))
+
+    #random.shuffle(player_info)
+    output_dir = "battle_{}".format(str(datetime.datetime.now()).replace(":", "").replace("-","").replace(" ", "_"))
+    os.makedirs(output_dir)
+
+    # player_info should be a list of tuples: (name, getter) such that getter(name) returns a player callable
+    for p1info, p2info in itertools.combinations(player_info, r=2):
+        p1_name, get_p1_fn = p1info
+        p2_name, get_p2_fn = p2info
+        print("{} vs. {}".format(p1_name, p2_name))
+        battle_round(p1_name, get_p1_fn, p2_name, get_p2_fn, output_dir)
+        print("{} vs. {}".format(p2_name, p1_name))
+        battle_round(p2_name, get_p2_fn, p1_name, get_p1_fn, output_dir)
+
+    summary_results.summarize(output_dir)
+
 
 def main():
     module_names = [p.as_posix() for p in pathlib.Path("players").iterdir() if p.is_file()]
-    module_names = ["players/darryl_player.py", "players/random_player.py"]
-
+    #battle(module_names)
     while True:
-        battle(module_names)
-
+        battle_mp(module_names)
 
 if __name__ == "__main__":
     main()

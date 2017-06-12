@@ -3,11 +3,13 @@ import collections
 import subprocess
 import argparse
 import os
+import sys
 import shutil
 
 def summarize(dir):
 
     total_wins = collections.defaultdict(int)
+    total_losses = collections.defaultdict(int)
     wins = collections.defaultdict(int)
     losses = collections.defaultdict(int)
     fails = collections.defaultdict(int)
@@ -15,39 +17,47 @@ def summarize(dir):
     all_games = list()
 
     for f in pathlib.Path(dir).iterdir():
-        if not f.is_file() or not f.name.endswith(".log") or f.name.startswith("battle_summary"):
-            continue
         try:
-            log_lines = open(f.as_posix(), 'r').readlines()
-            final_game, last_line = log_lines[-2:]
-        except:
-            print("Exception reading {}".format(f.as_posix()))
-            continue
-        #Full Game:['b4', 'd4', 'h6', 'f3', 'f4', 'd2', 'c3', 'd5', 'd3', 'c1', 'f5', 'e3']
-        #costello was last to move: MoveResult.PLAYER_WINS
-        try:
-            p1, _, p2 = f.name.split(" ")[0].replace(".log", "").split("_")
+            if not f.is_file() or not f.name.endswith(".log") or f.name.startswith("battle_summary"):
+                continue
+            try:
+                log_lines = open(f.as_posix(), 'r').readlines()
+                final_game, last_line = log_lines[-2:]
+            except:
+                print("Exception reading {}".format(f.as_posix()))
+                continue
+            # Full Game:['b4', 'd4', 'h6', 'f3', 'f4', 'd2', 'c3', 'd5', 'd3', 'c1', 'f5', 'e3']
+            # costello was last to move: MoveResult.PLAYER_WINS
+            try:
+                p1, _, p2 = f.name.split(" ")[0].replace(".log", "").split("_")
+                names.add(p1)
+                names.add(p2)
+            except Exception as ex:
+                raise RuntimeError("Failed to split:" + f.name) from ex
+            moves = eval(final_game.rstrip().split(":")[1])
+            image_name = f.name.replace(".log", ".png")
+
+            player_name = last_line.split(" ")[0]
+            opp_name = p1 if player_name == p2 else p2
+            if last_line.find("PLAYER_WINS") >= 0:
+                wins[player_name] += 1
+                total_wins[player_name] += 1
+                total_losses[opp_name] += 1
+            if last_line.find("PLAYER_LOSES") >= 0:
+                losses[player_name] += 1
+                total_wins[opp_name] += 1
+                total_losses[player_name] += 1
+            if last_line.find("ILLEGAL_MOVE") >= 0:
+                fails[player_name] += 1
+                total_wins[opp_name] += 1
+                total_losses[player_name] += 1
+            if last_line.find("ERROR_WHILE_MOVING") >= 0:
+                fails[player_name] += 1
+                total_wins[opp_name] += 1
+                total_losses[player_name] += 1
         except Exception as ex:
-            raise RuntimeError("Failed to split:" + f.name) from ex
-        moves = eval(final_game.rstrip().split(":")[1])
-        image_name = f.name.replace(".log", ".png")
-
-        player_name = last_line.split(" ")[0]
-        opp_name = p1 if player_name == p2 else p2
-        names.add(player_name)
-        if last_line.find("PLAYER_WINS") >= 0:
-            wins[player_name] += 1
-            total_wins[player_name] += 1
-        if last_line.find("PLAYER_LOSES") >= 0:
-            losses[player_name] += 1
-            total_wins[opp_name] += 1
-        if last_line.find("ILLEGAL_MOVE") >= 0:
-            fails[player_name] += 1
-            total_wins[opp_name] += 1
-        if last_line.find("ERROR_WHILE_MOVING") >= 0:
-            fails[player_name] += 1
-            total_wins[opp_name] += 1
-
+            print("Failed to input {}, skipping".format(f.name))
+            continue
 
         # Generate some tex content
         tex_filename = "{}/{}".format(dir, f.name.replace(".log", "_moves.tex"))
@@ -57,6 +67,8 @@ def summarize(dir):
             judges = [line for line in log_lines if line.find("Judge") == 2]
             if len(moves) != len(moves):
                 print("Failed to create tex for file: {}".format(str(f)))
+            #Balogna was last to move: MoveResult.ERROR_WHILE_MOVING
+
             for one_move, one_judge in zip(moves, judges):
                 # Turn 9 by Balogna moves at c1.  Time to decide: 3.005s
                 parts = one_move.split(" ")
@@ -67,6 +79,10 @@ def summarize(dir):
                 #  Judge says: MoveResult.CONTINUE_GAME
                 result = one_judge.split('.')[-1].rstrip().replace("_", "\\_")
                 print("{} & {} & {} & {} & {} \\\\".format(turn, player, space, result, time), file=move_file)
+
+            if last_line.find("ERROR_WHILE_MOVING") >= 0:
+                print("{} & {} & {} & {} & {} \\\\".format(len(moves), player_name, "NA", "ERROR_WHILE_MOVING", ""), file=move_file)
+
         if len(moves) > 0:
             all_games.append("{}_vs_{}".format(p1, p2))
 
@@ -78,7 +94,7 @@ def summarize(dir):
 
     with open("summary.tex".format(dir), 'w') as file_obj:
         for name in sorted(names):
-            print(" & ".join([str(s) for s in [name, total_wins[name], wins[name], losses[name], fails[name]]])+r" \\", file=file_obj)
+            print(" & ".join([str(s) for s in [name, total_wins[name], total_losses[name], wins[name], losses[name], fails[name]]])+r" \\", file=file_obj)
 
     with open("all_games.tex", "w") as file_obj:
         for i, game in enumerate(all_games):
@@ -99,6 +115,8 @@ def parse_args():
     return parser.parse_args()
 
 if __name__ == "__main__":
+    #summarize("battle_20170611_011733.531021")
+    #sys.exit(0)
     for path in pathlib.Path(".").iterdir():
         if path.name.find('battle_20') == 0 and path.is_dir():
             try:

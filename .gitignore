@@ -1,3 +1,5 @@
 /battle_2017*/
 /summaries/
 *.pyc
+/old_battles/
+/__pycache__/
