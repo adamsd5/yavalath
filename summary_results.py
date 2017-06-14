@@ -5,8 +5,9 @@ import argparse
 import os
 import sys
 import shutil
+import itertools
 
-def summarize(dir):
+def summarize(dir, outdir="summaries"):
 
     total_wins = collections.defaultdict(int)
     total_losses = collections.defaultdict(int)
@@ -15,6 +16,8 @@ def summarize(dir):
     fails = collections.defaultdict(int)
     names = set()
     all_games = list()
+
+    win_table = collections.defaultdict(int)
 
     for f in pathlib.Path(dir).iterdir():
         try:
@@ -43,18 +46,22 @@ def summarize(dir):
                 wins[player_name] += 1
                 total_wins[player_name] += 1
                 total_losses[opp_name] += 1
+                win_table[(player_name, opp_name)] += 1
             if last_line.find("PLAYER_LOSES") >= 0:
                 losses[player_name] += 1
                 total_wins[opp_name] += 1
                 total_losses[player_name] += 1
+                win_table[(opp_name, player_name)] += 1
             if last_line.find("ILLEGAL_MOVE") >= 0:
                 fails[player_name] += 1
                 total_wins[opp_name] += 1
                 total_losses[player_name] += 1
+                win_table[(opp_name, player_name)] += 1
             if last_line.find("ERROR_WHILE_MOVING") >= 0:
                 fails[player_name] += 1
                 total_wins[opp_name] += 1
                 total_losses[player_name] += 1
+                win_table[(opp_name, player_name)] += 1
         except Exception as ex:
             print("Failed to input {}, skipping".format(f.name))
             continue
@@ -92,6 +99,17 @@ def summarize(dir):
         for name in sorted(names):
             print("{}: {} victories, {} win moves, {} loss moves, {} fail moves".format(name, total_wins[name], wins[name], losses[name], fails[name]), file=file_obj)
 
+    with open("win_table.tex", 'w') as file_obj:
+        tex_line = r"\begin{tabular}[b]{c|" + "c"*len(names) + r"}"
+        print(tex_line, file=file_obj)
+        tex_line = " & " + " & ".join(sorted(names)) + r" \\"
+        print(tex_line, file=file_obj)
+        print(r"\hline", file=file_obj)
+        for player1 in sorted(names):
+            tex_line = player1 + " & " + " & ".join([str(win_table[(player1, player2)]) for player2 in sorted(names)]) + r" \\"
+            print(tex_line, file=file_obj)
+        print(r"\end{tabular}", file=file_obj)
+
     with open("summary.tex".format(dir), 'w') as file_obj:
         for name in sorted(names):
             print(" & ".join([str(s) for s in [name, total_wins[name], total_losses[name], wins[name], losses[name], fails[name]]])+r" \\", file=file_obj)
@@ -105,7 +123,7 @@ def summarize(dir):
 
     pdflatex=r"C:/Program Files/MiKTeX 2.9/miktex/bin/x64/pdflatex.exe"
     subprocess.call([pdflatex, "-output-directory", dir, "battle_summary.tex"])
-    shutil.copy("{}/battle_summary.pdf".format(dir), "summaries/{}.summary.pdf".format(dir))
+    shutil.copy("{}/battle_summary.pdf".format(dir), "{}/{}.summary.pdf".format(outdir, dir))
 
 
 
@@ -115,13 +133,14 @@ def parse_args():
     return parser.parse_args()
 
 if __name__ == "__main__":
-    #summarize("battle_20170611_011733.531021")
+    out_dir = "summaries_test"
+    #summarize("battle_20170611_221939.395223", outdir=out_dir)
     #sys.exit(0)
     for path in pathlib.Path(".").iterdir():
         if path.name.find('battle_20') == 0 and path.is_dir():
             try:
                 print("Summarizing:", path.name)
-                summarize(path.name)
+                summarize(path.name, outdir=out_dir)
             except Exception as ex:
                 print("Something went wrong with:", path.name, ex)
                 print("Exception:", ex)

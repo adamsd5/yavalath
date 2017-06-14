@@ -41,24 +41,17 @@
     \end{tabular}
 }
 \begin{document}
-%\begin{longtable}{p{.50\textwidth} p{.50\textwidth}}
-%    \onegame{battle_20170606_104039.225522/abbot_vs_adam} &
-%    \onegame{battle_20170606_104039.225522/abbot_vs_arael} \\
-%    \onegame{battle_20170606_104039.225522/abbot_vs_armisael} &
-%    \onegame{battle_20170606_104039.225522/abbot_vs_Balogna} \\
-%%    \input{all_games}
-%\end{longtable}
-%\resizebox{\textwidth}{!}{ % Scales the contents to fit the width of the page
-%    \begin{tabular}{c}
-%        \input{all_games}
-%    \end{tabular}
-%}
+
+% The game summary by player
 \begin{tabular}[b]{c|cc|ccc}
     Player & Victories & Defeats & Win Moves & Suicides & Errors and Timeouts \\
     \hline
     \input{summary.tex}
     \hline
 \end{tabular}
+
+% The win table, player by player
+\input{win_table}
 
 \input{all_games}
 

@@ -147,6 +147,9 @@ class HexBoard:
         axis, distance_factor = lookup[direction]
         return self.next_space(space, axis, distance * distance_factor)
 
+def moves_to_board_string(moves):
+    r = Render(HexBoard, moves)
+    return r.render_ascii()
 
 class Render:
     def __init__(self, board, moves):
@@ -352,6 +355,7 @@ def battle_round(p1name, p1maker, p2name, p2maker, output_dir):
                     after = time.time()
                     turn_time = after - before
                     print("Turn {} by {} moves at {}.  Time to decide: {:.03f}s".format(len(game_history), player_name, move, turn_time), file=game_log)
+                    print("Turn {} by {} moves at {}.  Time to decide: {:.03f}s".format(len(game_history), player_name, move, turn_time))
                 except Exception as ex:
                     print("Exception while taking a turn by {}".format(player_name), file=game_log)
                     print("Exception:{}".format(ex), file=game_log)
@@ -492,7 +496,9 @@ def battle_mp(module_paths):
 
 def main():
     module_names = [p.as_posix() for p in pathlib.Path("players").iterdir() if p.is_file()]
-    #battle(module_names)
+    module_names = ["players/darryl_player.py"]
+    battle_mp(module_names)
+    return
     while True:
         battle_mp(module_names)
 
