@@ -496,7 +496,7 @@ def battle_mp(module_paths):
 
 def main():
     module_names = [p.as_posix() for p in pathlib.Path("players").iterdir() if p.is_file()]
-    module_names = ["players/darryl_player.py"]
+    module_names = ["players/blue_player.py"]
     battle_mp(module_names)
     return
     while True:
