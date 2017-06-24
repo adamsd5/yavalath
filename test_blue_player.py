@@ -2,6 +2,10 @@ import unittest
 import yavalath_engine
 from players import blue_player
 import pprint
+import collections
+import pickle
+import timeit
+import numpy
 
 class TestDarrylPlayer(unittest.TestCase):
     def test_moves_to_vec(self):
@@ -10,6 +14,97 @@ class TestDarrylPlayer(unittest.TestCase):
 
     def test_vector_player(self):
         blue_player.vector_player([])
+
+
+class TestNextMoveClassifier(unittest.TestCase):
+    def test_pair_of_arms(self):
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((1, 1, 0), (0, 0, 0), 1), blue_player.SpaceProperies.WHITE_LOSE)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((1, 0, 0), (1, 0, 0), 1), blue_player.SpaceProperies.WHITE_LOSE)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, -1, 0), (0, 0, 0), -1), blue_player.SpaceProperies.BLACK_LOSE)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, 0, 0), (-1, 0, 0), -1), blue_player.SpaceProperies.BLACK_LOSE)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((1, 1, 0), (1, 0, 0), 1), blue_player.SpaceProperies.WHITE_WIN)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((1, 0, 0), (1, 1, 0), 1), blue_player.SpaceProperies.WHITE_WIN)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, -1, 0), (-1, 0, 0), -1), blue_player.SpaceProperies.BLACK_WIN)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, 0, 0), (-1, -1, 0), -1), blue_player.SpaceProperies.BLACK_WIN)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, -1, 0), (-1, 0, 0), 1), None)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((1, -1, 0), (-1, 0, 0), 1), None)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((0, 1, 1), (0, 1, 1), 1), blue_player.SpaceProperies.WHITE_DOUBLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((0, -1, -1), (0, -1, -1), -1), blue_player.SpaceProperies.BLACK_DOUBLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, 1, 1), (0, 1, 1), 1), blue_player.SpaceProperies.WHITE_SINGLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((0, 1, 0), (1, 0, 0), 1), blue_player.SpaceProperies.WHITE_SINGLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((1, 0, 0), (0, 1, 0), 1), blue_player.SpaceProperies.WHITE_SINGLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((0, -1, -1), (0, 1, 1), -1), blue_player.SpaceProperies.BLACK_SINGLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((0, -1, 0), (-1, 0, 0), -1), blue_player.SpaceProperies.BLACK_SINGLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, 0, 0), (0, -1, 0), -1), blue_player.SpaceProperies.BLACK_SINGLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((1, 0, 1), (1, 1, 0), 1), blue_player.SpaceProperies.WHITE_WIN)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, 0, 0), (0, -1, 0), -1), blue_player.SpaceProperies.BLACK_SINGLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((1, 0, 1), (1, 1, 0), 1), blue_player.SpaceProperies.WHITE_WIN)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, 0, 0), (0, -1, 0), -1), blue_player.SpaceProperies.BLACK_SINGLE_CHECK)
+        self.assertEqual(blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms((-1, 0, 0), (0, -1, 0), -1), blue_player.SpaceProperies.BLACK_SINGLE_CHECK)
+
+    def test_condition_vector(self):
+        space_to_index = {space: i for i, space in enumerate(yavalath_engine.HexBoard().spaces)}
+        board = yavalath_engine.HexBoard()
+        for space in ['e5', 'e4', 'e6', 'd5', 'f5']:
+            condition_vec = blue_player.NextMoveClassifier.get_condition_vector_for_space(space)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 0, 1)], 0], 3**0)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 0, 2)], 0], 3**1)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 0, 3)], 0], 3**2)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 1, 1)], 0], 3**3)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 1, 2)], 0], 3**4)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 1, 3)], 0], 3**5)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 2, 1)], 0], 3**6)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 2, 2)], 0], 3**7)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 2, 3)], 0], 3**8)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 3, 1)], 0], 3**9)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 3, 2)], 0], 3**10)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 3, 3)], 0], 3**11)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 4, 1)], 0], 3**12)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 4, 2)], 0], 3**13)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 4, 3)], 0], 3**14)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 5, 1)], 0], 3**15)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 5, 2)], 0], 3**16)
+            self.assertEqual(condition_vec[space_to_index[board.next_space_in_dir(space, 5, 3)], 0], 3**17)
+
+    def test_signature_and_propeties(self):
+        signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties((
+            (0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0)))
+        self.assertEqual(signature, 0)
+        self.assertEqual(properties, (None, None))
+
+        signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties((
+            (1,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0)))
+        self.assertEqual(signature, 1)
+        self.assertEqual(properties, (None, None))
+
+        signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties((
+            (0,1,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0)))
+        self.assertEqual(signature, 3)
+        self.assertEqual(properties, (None, None))
+
+        signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties((
+            (1,1,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0)))
+        self.assertEqual(signature, 4)
+        self.assertTupleEqual(properties, (blue_player.SpaceProperies.WHITE_LOSE, None))
+
+        signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties((
+            (-1,-1,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0)))
+        self.assertEqual(signature, -4)
+        self.assertTupleEqual(properties, (None, blue_player.SpaceProperies.BLACK_LOSE))
+
+        signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties((
+            (1,1,0),(0,0,0),(1,1,0),(1,0,0),(0,0,0),(0,0,0)))
+        self.assertTupleEqual(properties, (blue_player.SpaceProperies.WHITE_WIN, None))
+
+        signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties((
+            (1,1,0),(1,0,0),(1,1,0),(1,0,0),(1,0,0),(0,0,0)))
+        self.assertTupleEqual(properties, (blue_player.SpaceProperies.WHITE_WIN, None))
+
+        signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties((
+            (1,1,0),(1,0,0),(-1,-1,0),(1,0,0),(0,1,0),(0,0,0)))
+        self.assertTupleEqual(properties, (blue_player.SpaceProperies.WHITE_WIN, blue_player.SpaceProperies.BLACK_LOSE))
+
+        # TODO: Lots more would be nice, but I think this is enough for now.
 
 
 class TestConditions(unittest.TestCase):
@@ -190,8 +285,7 @@ def get_board_hash2(white_move_indices, black_move_indices):
     key = (white_bitset, black_bitset)
     return hash(key)
 
-def main():
-    import timeit
+def main4():
     game_so_far = "g1 d5 e7 b5 e1 e3 i4 g4 b6 e4 f5 a5 c5 e8 c3 d3 f4 d2 d4".split()
     print("Starting white spaces:", game_so_far[::2])
     print("Starting black spaces:", game_so_far[1::2])
@@ -205,5 +299,61 @@ def main():
     t = timeit.timeit(lambda: get_board_hash2(white_move_indices, black_move_indices))
     print("get_board_hash2: 1M iterations took {}s".format(t))
 
+def to_str(p):
+    if len(p) == 1:
+        return p[0].value
+    else:
+        white, black = p
+        return "{}, {}".format(str(white) if white is None else white.value, str(black) if black is None else black.value)
+
+def main5():
+    signature_table, properties_table = pickle.load(open("test.dat", 'rb'))
+
+    for p in sorted([to_str(s) for s in properties_table]):
+        print(p)
+    print("Done")
+
+def main6():
+    properties = dict()
+    t = timeit.timeit(lambda: blue_player.NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms_fast((-1, 0, 0), (0, -1, 0), -1))
+    print(t)
+
+def main7():
+    done_tasks = pickle.load(open("data/backup/complete_tasks.dat", 'rb'))
+    SIGNATURE_OFFSET = sum([3**i for i in range(18)])  # Add this to all signatures to make them >= 0.
+
+
+    for i in [0, 1, 2, 3]:
+        filename = "data/backup/signature_table_worker_{}.dat".format(i)
+        print("File:{}".format(filename))
+        signature_table, properties_table = pickle.load(open(filename, 'rb'))
+        #full_table = properties_table[signature_table]
+        #print(full_table)
+        print("Max:", signature_table.max())
+        print(len(properties_table))
+        # signature = numpy.where(signature_table == 26)[0]
+        # arms = blue_player.NextMoveClassifier.signature_to_arms(int(signature))
+        # signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties(arms)
+        # print(signature+SIGNATURE_OFFSET, properties)
+        # print(properties_table)
+        #
+        # for p in sorted([to_str(s) for s in properties_table]):
+        #     print(p)
+
+def main8():
+    signatures = [
+            303081869,
+            306723378,
+            44801543,
+            173941706,
+        ]
+    for signature in signatures:
+        SIGNATURE_OFFSET = sum([3**i for i in range(18)])  # Add this to all signatures to make them >= 0.
+        arms = blue_player.NextMoveClassifier.signature_to_arms(int(signature))
+        print(signature, arms, SIGNATURE_OFFSET+blue_player.NextMoveClassifier.compute_signature(arms))
+        signature, properties = blue_player.NextMoveClassifier.compute_signature_and_properties(arms)
+        print(signature+SIGNATURE_OFFSET, properties)
+
 if __name__ == "__main__":
-    main2()
+    main7()
+   # blue_player.NextMoveClassifier.compute_signature_table()

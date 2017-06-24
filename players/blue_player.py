@@ -6,6 +6,13 @@ import pprint
 import numpy
 import itertools
 import functools
+import collections
+import pickle
+import time
+import multiprocessing
+import queue
+import os
+import pathlib
 
 logger = logging.getLogger("darryl_player")
 logger.setLevel(logging.DEBUG)
@@ -88,6 +95,441 @@ def get_player(name):
 #============================================================================================================
 board = yavalath_engine.HexBoard()
 
+# ==== The horizon condition vectors approach ===
+# IDEA: What if I define a kernel method that applies to the whole board.  For any space, we know whether it is a win,
+# loss, check, or block (it could be more than one of these) based on just the 2 spaces in any direction.  Maybe I put
+# 3^n on each of those kernel entries, leading to a unique number for each possibility.  There are 12 surrounding
+# spaces, for 3^12 values = 531441.  This isn't bad.  Have a lookup array of those values into a condition table.  This
+# approach would mean single condition matrix, of 61 condition vectors.  If I do a horizon of 3 spaces, I get a bigger
+# lookup table, 3**18 = 387420489, which is big, but not too big for memory.  400MB of my budget.  This would allow me
+# to determine checks and multi-checks as well.
+
+# Maybe nos is when I abstract out the board/condition updates from the move selection.  A classified board has this
+# interface:
+#    __init__(game_so_far)
+#    options # list of allowable moves (the output string, like 'e1')
+#    column_index_to_board_index  # Maps from the potential move number to the board index of that move
+#    add_move(move_index)  # or push_move?
+#    undo_move()           # pop_move?
+#    # Getters for the list of moves that cause white/black win/loss/check/multicheck (checks need a 3-horizon)
+#    classifications  # dict of states -> set of options
+#    next_turn_token   #-1 or 1, depending who goes next
+
+NUMBER_OF_BOARD_SPACES = 61
+class SpaceProperies(Enum):
+    GAME_OVER = "GAME_OVER"
+    WHITE_WIN = "WHITE_WIN"
+    WHITE_LOSE = "WHITE_LOSE"
+    WHITE_SINGLE_CHECK = "WHITE_SINGLE_CHECK"
+    WHITE_DOUBLE_CHECK = "WHITE_DOUBLE_CHECK"
+    BLACK_WIN = "BLACK_WIN"
+    BLACK_LOSE = "BLACK_LOSE"
+    BLACK_SINGLE_CHECK = "BLACK_SINGLE_CHECK"
+    BLACK_DOUBLE_CHECK = "BLACK_DOUBLE_CHECK"
+    
+    
+class NextMoveClassifier():
+    @staticmethod
+    @functools.lru_cache()
+    def keys_for_token(token):
+        if token == 1:
+            return SpaceProperies.WHITE_WIN, SpaceProperies.WHITE_LOSE, SpaceProperies.WHITE_DOUBLE_CHECK, SpaceProperies.WHITE_SINGLE_CHECK
+        else:
+            return SpaceProperies.BLACK_WIN, SpaceProperies.BLACK_LOSE, SpaceProperies.BLACK_DOUBLE_CHECK, SpaceProperies.BLACK_SINGLE_CHECK
+            
+    @staticmethod
+    @functools.lru_cache()
+    def find_wins_and_checks_for_token_and_opp_arms(left_arm, right_arm, token):
+        """Add to 'properites'.  I plan to call this for each token, for each of the 3 axes.  The properties
+        count how many axes have each condition.
+        TODO: This needs to improve... really, there is one condition for white and black, either:
+           WIN, LOSE, DOUBLE_CHECK, or SINGLE_CHECK, in that order.
+        Only one of each color.  That's how to label the space.
+        """
+        properties = dict()
+        win_key, lose_key, double_check_key, single_check_key = NextMoveClassifier.keys_for_token(token)
+
+        # Detect outright wins
+        if (left_arm[1] == left_arm[0] == token == right_arm[0]) or (left_arm[0] == token == right_arm[0] == right_arm[1]):
+            return win_key
+
+        # And now outright losses
+        if (left_arm[1] == left_arm[0] == token) or (left_arm[0] == token == right_arm[0]) or (token == right_arm[0] == right_arm[1]):
+            return lose_key
+
+        # And now a double-check on this axis
+        if (left_arm[2] == left_arm[1] == right_arm[1] == right_arm[2] == token) and (left_arm[0] == right_arm[0] == 0):
+            return double_check_key
+
+        # And now single-checks on this axis, possibly upgrading them to double-checks
+        if (left_arm[1] == token and left_arm[0] == 0 and right_arm[0] == token) \
+                or (left_arm[0] == token and right_arm[0] == 0 and right_arm[1] == token) \
+                or (left_arm[2] == left_arm[1] == token) \
+                or (right_arm[2] == right_arm[1] == token):
+            return single_check_key
+
+    @staticmethod
+    @functools.lru_cache()
+    def white_result_from_arm_results(r1, r2, r3):
+        arm_results = (r1, r2, r3)
+        if SpaceProperies.WHITE_WIN in arm_results:
+            white_result = SpaceProperies.WHITE_WIN
+        elif SpaceProperies.WHITE_LOSE in arm_results:
+            white_result = SpaceProperies.WHITE_LOSE
+        elif SpaceProperies.WHITE_DOUBLE_CHECK in arm_results:
+            white_result = SpaceProperies.WHITE_DOUBLE_CHECK
+        else:
+            check_count = arm_results.count(SpaceProperies.WHITE_SINGLE_CHECK)
+            if check_count > 1:
+                white_result = SpaceProperies.WHITE_DOUBLE_CHECK
+            elif check_count == 1:
+                white_result = SpaceProperies.WHITE_SINGLE_CHECK
+            else:
+                white_result = None
+        return white_result
+
+    @staticmethod
+    @functools.lru_cache()
+    def black_result_from_arm_results(r1, r2, r3):
+        arm_results = (r1, r2, r3)
+        if SpaceProperies.BLACK_WIN in arm_results:
+            black_result = SpaceProperies.BLACK_WIN
+        elif SpaceProperies.BLACK_LOSE in arm_results:
+            black_result = SpaceProperies.BLACK_LOSE
+        elif SpaceProperies.BLACK_DOUBLE_CHECK in arm_results:
+            black_result = SpaceProperies.BLACK_DOUBLE_CHECK
+        else:
+            check_count = arm_results.count(SpaceProperies.BLACK_SINGLE_CHECK)
+            if check_count > 1:
+                black_result = SpaceProperies.BLACK_DOUBLE_CHECK
+            elif check_count == 1:
+                black_result = SpaceProperies.BLACK_SINGLE_CHECK
+            else:
+                black_result = None
+        return black_result
+
+    @staticmethod
+    def signature_to_arms(signature):
+        SIGNATURE_OFFSET = sum([3**i for i in range(18)])  # Add this to all signatures to make them >= 0.
+        tokens = list()
+        for i in range(18):
+            modulus = signature % 3
+            token = [-1, 0, 1][modulus]
+            tokens.append(token)
+            signature = int(signature / 3)
+        return tuple(tokens[0:3]), tuple(tokens[3:6]), tuple(tokens[6:9]), tuple(tokens[9:12]), tuple(tokens[12:15]), tuple(tokens[15:18])
+
+    @staticmethod
+    def compute_signature(arms):
+        game_vec = moves_to_board_vector([])[:-1]
+        for direction in range(6):
+            for distance in range(3):
+                token = arms[direction][distance]
+                next_space = board.next_space_in_dir('e5', direction=direction, distance=1+distance)
+                next_space_index = NextMoveClassifier.space_to_index[next_space]
+                game_vec[next_space_index] = token  # -1, 0, or +1
+        e5_condition_vector = NextMoveClassifier.get_condition_vector_for_space('e5')
+        e5_signature = sum(e5_condition_vector * game_vec)[0]
+        return e5_signature
+
+    @staticmethod
+    def compute_signature_and_properties(arms):
+        """arms is a 6-tuple of the values in the arms pointing out from 'e5'.  Use the 'e5' condition vector and
+        compute the signature after setting the peices according to 'arms'.  Then, determine the properties tuple,
+        and map the signature to that tuple."""
+        assert len(arms) == 6, "Expects 6 arms, but {} were given".format(len(arms))
+        game_vec = moves_to_board_vector([])[:-1]
+        for direction in range(6):
+            for distance in range(3):
+                token = arms[direction][distance]
+                next_space = board.next_space_in_dir('e5', direction=direction, distance=1+distance)
+                assert next_space is not None, "This algo should always be able to find the next space from 'e5'"
+                next_space_index = NextMoveClassifier.space_to_index[next_space]
+                game_vec[next_space_index] = token  # -1, 0, or +1
+        e5_condition_vector = NextMoveClassifier.get_condition_vector_for_space('e5')
+        assert len(e5_condition_vector) == len(game_vec), "The condition vector should match the board length, but {} != {}".format(len(e5_condition_vector), len(game_vec))
+        e5_signature = sum(e5_condition_vector * game_vec)[0]
+        # Now decide what moving at 'e5' does.
+
+        # If any arms are the same pieces, this is GAME_OVER_ALREADY
+        result = None
+        for arm in arms:
+            if arm[0] == arm[1] == arm[2] == 1 or arm[0] == arm[1] == arm[2] == -1:
+                result = (SpaceProperies.GAME_OVER,)
+
+
+        if result is None:
+            # Get the white result
+            r1 = NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms(arms[0], arms[3], 1)
+            r2 = NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms(arms[1], arms[4], 1)
+            r3 = NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms(arms[2], arms[5], 1)
+            white_result = NextMoveClassifier.white_result_from_arm_results(r1, r2, r3)
+
+            # Get the black result
+            r1 = NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms(arms[0], arms[3], -1)
+            r2 = NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms(arms[1], arms[4], -1)
+            r3 = NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms(arms[2], arms[5], -1)
+            black_result = NextMoveClassifier.black_result_from_arm_results(r1, r2, r3)
+
+            result = (white_result, black_result)
+
+        return e5_signature, result
+
+
+    @staticmethod
+    def find_wins_and_checks_for_token_and_opp_arms_slow(properties, left_arm, right_arm, token):
+        """Add to 'properites'.  I plan to call this for each token, for each of the 3 axes.  The properties
+        count how many axes have each condition.
+        TODO: This needs to improve... really, there is one condition for white and black, either:
+           WIN, LOSE, DOUBLE_CHECK, or SINGLE_CHECK, in that order.
+        Only one of each color.  That's how to label the space.
+        """
+        lose_key = SpaceProperies.WHITE_LOSE if token == 1 else SpaceProperies.BLACK_LOSE
+        win_key = SpaceProperies.WHITE_WIN if token == 1 else SpaceProperies.BLACK_WIN
+        single_check_key = SpaceProperies.WHITE_SINGLE_CHECK if token == 1 else SpaceProperies.BLACK_SINGLE_CHECK
+        double_check_key = SpaceProperies.WHITE_DOUBLE_CHECK if token == 1 else SpaceProperies.BLACK_DOUBLE_CHECK
+        line = list(reversed(left_arm)) + [token,] + list(right_arm)
+
+        # Detect outright wins
+        if (line[1] == line[2] == line[3] == line[4]) or (line[2] == line[3] == line[4] == line[5]):
+            properties[win_key] = 1
+            if lose_key in properties:
+                del properties[lose_key]
+
+        # And now outright losses
+        elif (line[1] == line[2] == line[3]) or (line[2] == line[3] == line[4]) or (line[3] == line[4] == line[5]):
+            if win_key not in properties:
+                properties[lose_key] = 1
+
+        # Only consider checks if there are no outright wins or losses
+        elif win_key not in properties and lose_key not in properties:
+            # And now a double-check on this axis
+            if line == [token, token, 0, token, 0, token, token]:
+                properties[double_check_key] = 1
+                if single_check_key in properties:
+                    del properties[single_check_key]
+
+            # And now single-checks on this axis, possibly upgrading them to double-checks
+            elif (line[1] == token and line[2] ==0 and line[4] == token) or (line[2] == token and line[4] == 0 and line[5] == token) \
+                or (line[0] == line[1] == token) or (line[6] == line[5] == token):
+                key = SpaceProperies.WHITE_SINGLE_CHECK if token == 1 else SpaceProperies.BLACK_SINGLE_CHECK
+                # If already have a single check, change it to double.  If we already have a double, don't add a single.
+                if key in properties:
+                    del properties[key]
+                    properties[double_check_key] = 1
+                elif double_check_key not in properties:
+                    properties[key] = 1
+
+    @staticmethod
+    @functools.lru_cache()
+    def get_condition_vector_for_space(space):
+        # Initialize the condition matrix.  It has 61 condition vectors, one for each board space.  There are up to 18
+        # non-zero entries in the vector, each a power of 3.
+        result = numpy.zeros((NUMBER_OF_BOARD_SPACES, 1), dtype="i4") # TODO: Try performance with i8
+        power_of_three = 1
+        for direction in range(6):
+            for distance in range(3):
+                next_space = board.next_space_in_dir(space, direction=direction, distance=distance+1)
+                if next_space is not None:  # Check if the horizon space is off the board.
+                    next_space_index = NextMoveClassifier.space_to_index[next_space]
+                    result[next_space_index] = power_of_three
+                power_of_three *= 3  # Always do this, even if the space was off the board
+        return result
+
+    @staticmethod
+    def compute_signature_and_properties_slow(arms):
+        """arms is a 6-tuple of the values in the arms pointing out from 'e5'.  Use the 'e5' condition vector and
+        compute the signature after setting the peices according to 'arms'.  Then, determine the properties tuple,
+        and map the signature to that tuple."""
+        assert len(arms) == 6, "Expects 6 arms, but {} were given".format(len(arms))
+        game_vec = moves_to_board_vector([])[:-1]
+        e5_condition_vector = NextMoveClassifier.get_condition_vector_for_space('e5')
+        for direction in range(6):
+            for distance in range(3):
+                token = arms[direction][distance]
+                next_space = board.next_space_in_dir('e5', direction=direction, distance=1+distance)
+                assert next_space is not None, "This algo should always be able to find the next space from 'e5'"
+                next_space_index = NextMoveClassifier.space_to_index[next_space]
+                game_vec[next_space_index] = token  # -1, 0, or +1
+        assert len(e5_condition_vector) == len(game_vec), "The condition vector should match the board length, but {} != {}".format(len(e5_condition_vector), len(game_vec))
+        e5_signature = sum(e5_condition_vector * game_vec)[0]
+        # Now decide what moving at 'e5' does.
+
+        properties = collections.defaultdict(int)
+
+        # If any arms are the same pieces, this is GAME_OVER_ALREADY
+        for arm in arms:
+            if arm[0] == arm[1] == arm[2] == 1 or arm[0] == arm[1] == arm[2] == -1:
+                properties[SpaceProperies.GAME_OVER] = 1  # The count of GAME_OVER doesn't matter.
+        if not SpaceProperies.GAME_OVER in properties:
+            for token in [-1, 1]:
+                NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms(properties, arms[0], arms[3], token)
+                NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms(properties, arms[1], arms[4], token)
+                NextMoveClassifier.find_wins_and_checks_for_token_and_opp_arms(properties, arms[2], arms[5], token)
+
+        # TODO: Here is the best place to simplify the properties to get one condition for black and one for white.
+
+        return e5_signature, properties
+
+    @staticmethod
+    def do_one_piece_of_work(arm1, arm2, arm_possibilities, signature_to_properties_index, all_properties_lists, verbose=False):
+        """Iterate over all products where the last of 6 arms is fixed.  I can then parallelize the work based on
+        that last arm value."""
+        # Each process makes its own tables.  I'll write merge routines later.
+        start = time.time()
+
+        for i, arms in enumerate(itertools.product(arm_possibilities, arm_possibilities, arm_possibilities, arm_possibilities)):
+            arms = list(arms)
+            arms.append(arm1)
+            arms.append(arm2)
+            signature, properties = NextMoveClassifier.compute_signature_and_properties(arms)
+            signature_index = NextMoveClassifier.SIGNATURE_OFFSET + signature
+            assert 0 <= signature_index < 2*NextMoveClassifier.SIGNATURE_OFFSET+1, "Invalid signature: {}".format(signature_index)
+            if properties not in all_properties_lists:
+                signature_to_properties_index[signature_index] = len(all_properties_lists)
+                all_properties_lists.append(properties)
+            else:
+                signature_to_properties_index[signature_index] = all_properties_lists.index(properties)
+
+            if verbose and i % 10000 == 0:
+                print("PID:{}, Arms: {}, {}, Done with step {}, duration so far: {}".format(os.getpid(), arm1, arm2, i, time.time() - start))
+
+            # if i > 30000:
+            #     break
+            #
+
+    @staticmethod
+    def worker(worker_id, work_queue, done_queue):
+        filename = "data/signature_table_worker_{}.dat".format(worker_id)
+        filepath = pathlib.Path(filename)
+        if not filepath.exists():
+            all_properties_lists = list()  # Indexed by the properties_index that is stored in signature_to_properties_index
+            signature_to_properties_index = numpy.zeros(2*NextMoveClassifier.SIGNATURE_OFFSET+1, dtype='i1')
+            print("This worker has not done work before.")
+        else:
+            signature_to_properties_index, all_properties_lists = pickle.load(open(filepath.as_posix(), 'rb'))
+            print("Loaded the worker state {}, {}".format(len(signature_to_properties_index), len(all_properties_lists)))
+
+        one_arm_possibilities = list(itertools.product([-1,0,1], [-1,0,1], [-1,0,1]))
+        verbose = True or (worker_id == 0)
+        try:
+            while True:
+                task = work_queue.get(timeout=60)
+                print("Worker: {}, Starting {} at {} on PID: {}".format(worker_id, task, time.time(), os.getpid()))
+                arm1, arm2 = task
+                NextMoveClassifier.do_one_piece_of_work(arm1, arm2, one_arm_possibilities, signature_to_properties_index, all_properties_lists, verbose)
+                with open(filepath.as_posix(), 'wb') as file_obj:
+                    pickle.dump(file=file_obj, obj=(signature_to_properties_index, all_properties_lists))
+                    print("Commit to file:{}".format(filename))
+                done_queue.put(task)
+        except queue.Empty:
+            if verbose:
+                print("Queue is empty")
+
+    @staticmethod
+    def compute_signature_table():
+        # I also need to initialize the condition outcomes array.  This has 3**18 entries.  The product of a condition
+        # vector and a board vector gives a value in [-N, N] where N = sum([3**i for i in range(18)]) = 193710244
+        # Call this number the signature of the space, given the board.
+        # (Of course, most of these won't get hit, as it's not possible to have 3 black in a row on one of the arms, for
+        # instance.  That would already be a loss for black.)
+
+        done_task_filename = "data/complete_tasks.dat"
+        done_task_filepath = pathlib.Path(done_task_filename)
+        if not done_task_filepath.exists():
+            done_tasks = list()
+            print("Nothing done yet.")
+        else:
+            done_tasks = pickle.load(open(done_task_filepath.as_posix(), 'rb'))
+            print("loaded {} done tasks: {}".format(len(done_tasks), done_tasks))
+
+        # Iterate over all possible sets of arms
+        work_queue = multiprocessing.Queue()
+        done_queue = multiprocessing.Queue()
+        one_arm_possibilities = list(itertools.product([-1,0,1], [-1,0,1], [-1,0,1]))
+        for arm1, arm2 in itertools.product(one_arm_possibilities, one_arm_possibilities):
+            task = (arm1, arm2)
+            if task not in done_tasks:
+                work_queue.put((arm1, arm2))  # Make 27*27 tasks
+
+        # Make some workers
+        processes = [multiprocessing.Process(target=NextMoveClassifier.worker, args=[id, work_queue, done_queue]) for id in range(4)]
+        for p in processes:
+            p.start()
+
+
+        while not work_queue.empty():
+            try:
+                while True:
+                    done_task = done_queue.get(timeout=60)
+                    done_tasks.append(done_task)
+                    print("Waiter... done_task: {}".format(done_task))
+                    with open(done_task_filepath.as_posix(), 'wb') as file_obj:
+                        pickle.dump(file=file_obj, obj=done_tasks)
+            except queue.Empty:
+                pass
+
+        for p in processes:
+            p.join()
+
+        return True
+
+    space_to_index = {space: i for i, space in enumerate(yavalath_engine.HexBoard().spaces)}
+    SIGNATURE_OFFSET = sum([3**i for i in range(18)])  # Add this to all signatures to make them >= 0.
+
+    def __init__(self, game_so_far, verbose=True):
+        self.verbose = verbose
+        self.options = sorted(list(set(board.spaces) - set(game_so_far)))
+        self.option_indices = set(range(len(self.options)))  # Column index into the potential move matrices
+        self.game_vec = moves_to_board_vector(game_so_far)
+
+        # Compute the condition matri.  I only care about condition vectors for empty spaces.
+        all_condition_vectors = [self.get_condition_vector_for_space(o) for o in self.options]
+        matrix_shape = (len(self.options), NUMBER_OF_BOARD_SPACES)
+        self.condition_matrix = numpy.matrix(numpy.array(list(itertools.chain(*all_condition_vectors))).reshape(matrix_shape), dtype='i4')
+        signature_table, properties_table = NextMoveClassifier.compute_signature_table()
+
+        # Populate the potential moves matrix.  Each column is a board-vector.  I'm not sure I need this.  My space
+        # signatures tell me a lot about which moves to make.  The potential move matrices would indeed give me a one
+        # move lookahead, but perhaps I can just use the DFS for that.
+        # self.column_index_to_board_index = numpy.zeros(shape=len(self.options), dtype='i1')  # Maps potential moves to board locations
+        # self.white_potential_moves = numpy.matrix(numpy.zeros(shape=(NUMBER_OF_BOARD_SPACES, len(self.options)), dtype='i1'))
+        # self.black_potential_moves = numpy.matrix(numpy.zeros(shape=(NUMBER_OF_BOARD_SPACES, len(self.options)), dtype='i1'))
+        # for column_index, option in enumerate(self.options):
+        #     self.column_index_to_board_index[column_index] = self.conditions.space_to_index[option]
+        #     self.white_potential_moves[:, column_index] = self.game_vec
+        #     self.black_potential_moves[:, column_index] = self.game_vec
+        #     self.white_potential_moves[self.column_index_to_board_index[column_index], column_index] = 1
+        #     self.black_potential_moves[self.column_index_to_board_index[column_index], column_index] = -1
+
+    def compute_winning_and_losing_moves(self):
+        """Populate the move sets that will be useful for making decisions on how to move.
+        Assumes black and white potential move matrices are current, and the condition_matrix is computed"""
+        # white_CxP = self.condition_matrix * self.white_potential_moves
+        # black_CxP = self.condition_matrix * self.black_potential_moves
+        signatures = self.condition_matrix * self.game_vec # This is "no move"... get signatures for all options
+        move_properties = self.signature_table[signatures]
+
+        self.moves_by_property = collections.defaultdict(list)
+        for option_index, properties in enumerate(move_properties):
+            for property_key, count in properties:
+                move_properties[property_key].append(option_index)
+
+        if self.verbose:
+            try:
+                print("White Wins:{}".format([self.options[i] for i in self.white_winning_moves]))
+                print("White Single Checks:{}".format([self.options[i] for i in self.white_single_checks]))
+                print("White Multi Checks:{}".format([self.options[i] for i in self.white_multi_checks]))
+                print("White Losses:{}".format([self.options[i] for i in self.white_losing_moves]))
+                print("Black Wins:{}".format([self.options[i] for i in self.black_winning_moves]))
+                print("Black Single Checks:{}".format([self.options[i] for i in self.black_single_checks]))
+                print("Black Multi Checks:{}".format([self.options[i] for i in self.black_multi_checks]))
+                print("Black Losses:{}".format([self.options[i] for i in self.black_losing_moves]))
+            except:
+                pass
+
+
+# ==== The linear condition vectors approach ===
 def spaces_to_board_vector(spaces, value):
     space_to_index = {space: i for i, space in enumerate(board.spaces)}
     N = 61+1
@@ -113,6 +555,7 @@ def moves_to_board_vector(moves):
         result[space_to_index[move]] = 1 if turn % 2 == 0 else -1
     result[61] = 1 # To account for the level of indicators.
     return result
+
 
 
 def get_linear_condition_matrix(kernel, delta=0):

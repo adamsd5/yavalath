@@ -1,0 +1,6 @@
+[submodule "players/GamePlayer2"]
+	path = players/GamePlayer2
+	url = git@github.com:fbaseggio/GamePlayer2.git
+[submodule "players/GamePlayer2_alt"]
+	path = players/GamePlayer2_alt
+	url = git@github.com:fbaseggio/GamePlayer2.git

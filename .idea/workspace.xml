@@ -2,10 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0b6bba1a-ec75-428d-b0f1-dd4ae93334ad" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/players/blue_player.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test_blue_player.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/players/GamePlayer2" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/players/GamePlayer2_alt" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.gitmodules" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/yavalath.iml" afterPath="$PROJECT_DIR$/.idea/yavalath.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/players/blue_player.py" afterPath="$PROJECT_DIR$/players/blue_player.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test_blue_player.py" afterPath="$PROJECT_DIR$/test_blue_player.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/yavalath_engine.py" afterPath="$PROJECT_DIR$/yavalath_engine.py" />
     </list>
     <ignored path="yavalath.iws" />
@@ -27,50 +29,111 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="blue_player.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="blue_player.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/players/blue_player.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="153">
-              <caret line="15" column="16" selection-start-line="15" selection-start-column="16" selection-end-line="15" selection-end-column="16" />
+            <state relative-caret-position="282">
+              <caret line="388" column="90" selection-start-line="388" selection-start-column="90" selection-end-line="388" selection-end-column="90" />
               <folding>
                 <element signature="e#0#22#0" expanded="true" />
-                <element signature="e#4148#4526#0" expanded="false" />
-                <element signature="e#4583#7443#0" expanded="false" />
-                <element signature="e#7501#7789#0" expanded="false" />
-                <element signature="e#7849#8148#0" expanded="false" />
-                <element signature="e#8207#8493#0" expanded="false" />
-                <element signature="e#8852#9579#0" expanded="false" />
-                <element signature="e#9606#9843#0" expanded="false" />
-                <element signature="e#9866#9881#0" expanded="false" />
-                <element signature="e#9944#16389#0" expanded="false" />
-                <element signature="e#24874#25821#0" expanded="false" />
-                <element signature="e#25879#29207#0" expanded="false" />
-                <element signature="e#40129#40459#0" expanded="false" />
-                <element signature="e#40542#41269#0" expanded="false" />
-                <element signature="e#41294#41709#0" expanded="false" />
-                <element signature="e#41735#44802#0" expanded="false" />
-                <element signature="e#44850#45678#0" expanded="false" />
-                <element signature="e#45702#46331#0" expanded="false" />
+                <element signature="e#5198#5521#0" expanded="false" />
+                <element signature="e#5644#5954#0" expanded="false" />
+                <element signature="e#7736#8470#0" expanded="false" />
+                <element signature="e#8576#9310#0" expanded="false" />
+                <element signature="e#13154#15683#0" expanded="false" />
+                <element signature="e#15785#16611#0" expanded="false" />
+                <element signature="e#16692#18873#0" expanded="false" />
+                <element signature="e#22082#24171#0" expanded="false" />
+                <element signature="e#28231#28550#0" expanded="false" />
+                <element signature="e#28610#28709#0" expanded="false" />
+                <element signature="e#28749#29127#0" expanded="false" />
+                <element signature="e#29185#32045#0" expanded="false" />
+                <element signature="e#32103#32391#0" expanded="false" />
+                <element signature="e#32451#32750#0" expanded="false" />
+                <element signature="e#32809#33095#0" expanded="false" />
+                <element signature="e#33454#34181#0" expanded="false" />
+                <element signature="e#34208#34445#0" expanded="false" />
+                <element signature="e#34468#34483#0" expanded="false" />
+                <element signature="e#34546#40991#0" expanded="false" />
+                <element signature="e#41287#64069#0" expanded="false" />
+                <element signature="e#44890#47101#0" expanded="false" />
+                <element signature="e#47155#49432#0" expanded="false" />
+                <element signature="e#50481#53809#0" expanded="false" />
+                <element signature="e#53871#54609#0" expanded="false" />
+                <element signature="e#54680#64069#0" expanded="false" />
+                <element signature="e#64731#65061#0" expanded="false" />
+                <element signature="e#65144#65871#0" expanded="false" />
+                <element signature="e#65896#66311#0" expanded="false" />
+                <element signature="e#66337#69404#0" expanded="false" />
+                <element signature="e#69452#70280#0" expanded="false" />
+                <element signature="e#70304#70933#0" expanded="false" />
+                <marker date="1498327023182" expanded="false" signature="6093:7630" placeholder="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="test_blue_player.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="test_blue_player.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test_blue_player.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-17">
-              <caret line="159" column="62" selection-start-line="159" selection-start-column="62" selection-end-line="159" selection-end-column="62" />
+            <state relative-caret-position="17">
+              <caret line="332" column="0" selection-start-line="332" selection-start-column="0" selection-end-line="332" selection-end-column="0" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
-                <element signature="e#439#1370#0" expanded="false" />
-                <element signature="e#2463#3395#0" expanded="false" />
-                <element signature="e#3448#4255#0" expanded="false" />
-                <element signature="e#4312#5115#0" expanded="false" />
-                <element signature="e#5161#7715#0" expanded="false" />
-                <element signature="e#7735#8019#0" expanded="false" />
-                <element signature="e#8063#8500#0" expanded="false" />
+                <element signature="e#497#4342#0" expanded="false" />
+                <element signature="e#4586#6604#0" expanded="false" />
+                <element signature="e#6658#8842#0" expanded="false" />
+                <element signature="e#8937#9868#0" expanded="false" />
+                <element signature="e#11946#12753#0" expanded="false" />
+                <element signature="e#12810#13613#0" expanded="false" />
+                <element signature="e#16233#16517#0" expanded="false" />
+                <element signature="e#16561#16998#0" expanded="false" />
+                <marker date="1498334130342" expanded="false" signature="4380:6604" placeholder="..." />
+                <marker date="1498334130342" expanded="false" signature="10952:11893" placeholder="..." />
+                <marker date="1498334130342" expanded="false" signature="13650:16213" placeholder="..." />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="cp1252.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/encodings/cp1252.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="96">
+              <caret line="22" column="0" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="green_player.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/players/green_player.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="85">
+              <caret line="5" column="0" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="contestant.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/players/GamePlayer2/contestant.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="17">
+              <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+              <folding>
+                <element signature="e#1#30#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
+        <entry file="file://$APPLICATION_HOME_DIR$/helpers/python-skeletons/multiprocessing/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="94">
+              <caret line="120" column="13" selection-start-line="120" selection-start-column="8" selection-end-line="120" selection-end-column="13" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -78,28 +141,8 @@
       <file leaf-file-name="yavalath_engine.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/yavalath_engine.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="269">
-              <caret line="504" column="19" selection-start-line="504" selection-start-column="19" selection-end-line="504" selection-end-column="19" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="defmatrix.py" pinned="false" current-in-tab="false">
-        <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/site-packages/numpy/matrixlib/defmatrix.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="126">
-              <caret line="317" column="0" selection-start-line="317" selection-start-column="0" selection-end-line="317" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="case.py" pinned="false" current-in-tab="false">
-        <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/unittest/case.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="87">
-              <caret line="1051" column="0" selection-start-line="1051" selection-start-column="0" selection-end-line="1051" selection-end-column="0" />
+            <state relative-caret-position="143">
+              <caret line="474" column="0" selection-start-line="474" selection-start-column="0" selection-end-line="474" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -115,8 +158,10 @@
       <list>
         <option value="$PROJECT_DIR$/players/darryl_player.py" />
         <option value="$PROJECT_DIR$/test_darryl_player.py" />
-        <option value="$PROJECT_DIR$/test_blue_player.py" />
+        <option value="$PROJECT_DIR$/yavalath_engine.py" />
+        <option value="$PROJECT_DIR$/players/green_player.py" />
         <option value="$PROJECT_DIR$/players/blue_player.py" />
+        <option value="$PROJECT_DIR$/test_blue_player.py" />
       </list>
     </option>
   </component>
@@ -163,95 +208,7 @@
     <property name="settings.editor.selected.configurable" value="editor.preferences.smartKeys" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
   </component>
-  <component name="RunManager" selected="Python.yavalath_engine">
-    <configuration default="false" name="Unittest TestConditions.test_win_conditions_board_3" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="yavalath" />
-      <option name="SCRIPT_NAME" value="C:\Users\Darryl\Google Drive\git_repos\github\yavalath\test_blue_player.py" />
-      <option name="CLASS_NAME" value="TestConditions" />
-      <option name="METHOD_NAME" value="test_win_conditions_board_3" />
-      <option name="FOLDER_NAME" value="" />
-      <option name="TEST_TYPE" value="TEST_METHOD" />
-      <option name="PATTERN" value="" />
-      <option name="USE_PATTERN" value="false" />
-      <option name="PUREUNITTEST" value="true" />
-      <option name="PARAMS" value="" />
-      <option name="USE_PARAM" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="Unittests in TestConditions" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="yavalath" />
-      <option name="SCRIPT_NAME" value="C:\Users\Darryl\Google Drive\git_repos\github\yavalath\test_blue_player.py" />
-      <option name="CLASS_NAME" value="TestConditions" />
-      <option name="METHOD_NAME" value="" />
-      <option name="FOLDER_NAME" value="" />
-      <option name="TEST_TYPE" value="TEST_CLASS" />
-      <option name="PATTERN" value="" />
-      <option name="USE_PATTERN" value="false" />
-      <option name="PUREUNITTEST" value="true" />
-      <option name="PARAMS" value="" />
-      <option name="USE_PARAM" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="Unittest TestConditions.test_win_conditions_board_4" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="yavalath" />
-      <option name="SCRIPT_NAME" value="C:\Users\Darryl\Google Drive\git_repos\github\yavalath\test_blue_player.py" />
-      <option name="CLASS_NAME" value="TestConditions" />
-      <option name="METHOD_NAME" value="test_win_conditions_board_4" />
-      <option name="FOLDER_NAME" value="" />
-      <option name="TEST_TYPE" value="TEST_METHOD" />
-      <option name="PATTERN" value="" />
-      <option name="USE_PATTERN" value="false" />
-      <option name="PUREUNITTEST" value="true" />
-      <option name="PARAMS" value="" />
-      <option name="USE_PARAM" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="Unittests in TestConditions (1)" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="yavalath" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_blue_player.py" />
-      <option name="CLASS_NAME" value="TestConditions" />
-      <option name="METHOD_NAME" value="" />
-      <option name="FOLDER_NAME" value="" />
-      <option name="TEST_TYPE" value="TEST_CLASS" />
-      <option name="PATTERN" value="" />
-      <option name="USE_PATTERN" value="false" />
-      <option name="PUREUNITTEST" value="true" />
-      <option name="PARAMS" value="" />
-      <option name="USE_PARAM" value="false" />
-      <method />
-    </configuration>
+  <component name="RunManager" selected="Python.test_blue_player">
     <configuration default="false" name="test_blue_player" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -265,6 +222,89 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="yavalath" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_blue_player.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="Unittest TestNextMoveClassifier.test_pair_of_arms" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="yavalath" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_blue_player.py" />
+      <option name="CLASS_NAME" value="TestNextMoveClassifier" />
+      <option name="METHOD_NAME" value="test_pair_of_arms" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_METHOD" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PUREUNITTEST" value="true" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="Unittest TestNextMoveClassifier.test_signature_and_propeties" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="yavalath" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_blue_player.py" />
+      <option name="CLASS_NAME" value="TestNextMoveClassifier" />
+      <option name="METHOD_NAME" value="test_signature_and_propeties" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_METHOD" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PUREUNITTEST" value="true" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="Unittests in TestNextMoveClassifier" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="yavalath" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_blue_player.py" />
+      <option name="CLASS_NAME" value="TestNextMoveClassifier" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_CLASS" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PUREUNITTEST" value="true" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="green_player" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/players" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="yavalath" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/players/green_player.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
@@ -422,19 +462,19 @@
     </configuration>
     <list size="6">
       <item index="0" class="java.lang.String" itemvalue="Python.yavalath_engine" />
-      <item index="1" class="java.lang.String" itemvalue="Python tests.Unittest TestConditions.test_win_conditions_board_3" />
-      <item index="2" class="java.lang.String" itemvalue="Python tests.Unittests in TestConditions" />
-      <item index="3" class="java.lang.String" itemvalue="Python tests.Unittest TestConditions.test_win_conditions_board_4" />
-      <item index="4" class="java.lang.String" itemvalue="Python tests.Unittests in TestConditions (1)" />
-      <item index="5" class="java.lang.String" itemvalue="Python.test_blue_player" />
+      <item index="1" class="java.lang.String" itemvalue="Python.test_blue_player" />
+      <item index="2" class="java.lang.String" itemvalue="Python tests.Unittest TestNextMoveClassifier.test_pair_of_arms" />
+      <item index="3" class="java.lang.String" itemvalue="Python tests.Unittest TestNextMoveClassifier.test_signature_and_propeties" />
+      <item index="4" class="java.lang.String" itemvalue="Python tests.Unittests in TestNextMoveClassifier" />
+      <item index="5" class="java.lang.String" itemvalue="Python.green_player" />
     </list>
     <recent_temporary>
       <list size="5">
         <item index="0" class="java.lang.String" itemvalue="Python.test_blue_player" />
-        <item index="1" class="java.lang.String" itemvalue="Python tests.Unittests in TestConditions (1)" />
-        <item index="2" class="java.lang.String" itemvalue="Python tests.Unittest TestConditions.test_win_conditions_board_4" />
-        <item index="3" class="java.lang.String" itemvalue="Python tests.Unittest TestConditions.test_win_conditions_board_3" />
-        <item index="4" class="java.lang.String" itemvalue="Python tests.Unittests in TestConditions" />
+        <item index="1" class="java.lang.String" itemvalue="Python tests.Unittest TestNextMoveClassifier.test_signature_and_propeties" />
+        <item index="2" class="java.lang.String" itemvalue="Python tests.Unittest TestNextMoveClassifier.test_pair_of_arms" />
+        <item index="3" class="java.lang.String" itemvalue="Python.green_player" />
+        <item index="4" class="java.lang.String" itemvalue="Python tests.Unittests in TestNextMoveClassifier" />
       </list>
     </recent_temporary>
   </component>
@@ -455,35 +495,35 @@
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Unittest_TestConditions_test_win_conditions_board_2 - 2017.06.22 at 02h 47m 09s.xml">
-      <configuration name="Unittest TestConditions.test_win_conditions_board_2" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 49m 10s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittest_TestConditions_test_win_conditions_board_3 - 2017.06.22 at 02h 48m 34s.xml">
-      <configuration name="Unittest TestConditions.test_win_conditions_board_3" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 49m 32s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittest_TestConditions_test_win_conditions_board_3 - 2017.06.22 at 02h 49m 26s.xml">
-      <configuration name="Unittest TestConditions.test_win_conditions_board_3" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 49m 50s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittest_TestConditions_test_win_conditions_board_3 - 2017.06.22 at 02h 50m 47s.xml">
-      <configuration name="Unittest TestConditions.test_win_conditions_board_3" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 50m 41s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittest_TestConditions_test_win_conditions_board_3 - 2017.06.22 at 02h 50m 51s.xml">
-      <configuration name="Unittest TestConditions.test_win_conditions_board_3" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 50m 58s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittest_TestConditions_test_win_conditions_board_4 - 2017.06.22 at 02h 51m 05s.xml">
-      <configuration name="Unittest TestConditions.test_win_conditions_board_4" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 51m 15s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittest_TestConditions_test_win_conditions_board_4 - 2017.06.22 at 02h 52m 17s.xml">
-      <configuration name="Unittest TestConditions.test_win_conditions_board_4" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 51m 26s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittest_TestConditions_test_win_conditions_empty_board - 2017.06.22 at 02h 47m 06s.xml">
-      <configuration name="Unittest TestConditions.test_win_conditions_empty_board" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 51m 30s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_TestConditions - 2017.06.22 at 02h 50m 02s.xml">
-      <configuration name="Unittests in TestConditions" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 51m 41s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_TestConditions_(1) - 2017.06.22 at 02h 54m 13s.xml">
-      <configuration name="Unittests in TestConditions (1)" configurationId="tests" />
+    <history-entry file="Unittest_TestNextMoveClassifier_test_signature_and_propeties - 2017.06.24 at 00h 51m 48s.xml">
+      <configuration name="Unittest TestNextMoveClassifier.test_signature_and_propeties" configurationId="tests" />
     </history-entry>
   </component>
   <component name="ToolWindowManager">
@@ -496,7 +536,7 @@
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32868218" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32868218" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32868218" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.44651163" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.57984495" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32868218" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
@@ -517,7 +557,7 @@
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32868218" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32868218" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.44651163" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2511628" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32868218" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2494043" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
@@ -544,10 +584,15 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/test_blue_player.py</url>
-          <line>202</line>
+          <line>296</line>
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/players/blue_player.py</url>
+          <line>254</line>
+          <option name="timeStamp" value="35" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="17" />
+      <option name="time" value="36" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="tests">
@@ -582,54 +627,147 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test_blue_player.py">
+    <entry file="file://$PROJECT_DIR$/players/red_player.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-17">
-          <caret line="159" column="62" selection-start-line="159" selection-start-column="62" selection-end-line="159" selection-end-column="62" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-            <element signature="e#439#1370#0" expanded="false" />
-            <element signature="e#2463#3395#0" expanded="false" />
-            <element signature="e#3448#4255#0" expanded="false" />
-            <element signature="e#4312#5115#0" expanded="false" />
-            <element signature="e#5161#7715#0" expanded="false" />
-            <element signature="e#7735#8019#0" expanded="false" />
-            <element signature="e#8063#8500#0" expanded="false" />
-          </folding>
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/yavalath_engine.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="269">
-          <caret line="504" column="19" selection-start-line="504" selection-start-column="19" selection-end-line="504" selection-end-column="19" />
+        <state relative-caret-position="143">
+          <caret line="474" column="0" selection-start-line="474" selection-start-column="0" selection-end-line="474" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/players/GamePlayer2/contestant.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <element signature="e#1#30#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/players/green_player.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="5" column="0" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/multiprocessing/reduction.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="58" column="0" selection-start-line="58" selection-start-column="0" selection-end-line="58" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/python-skeletons/multiprocessing/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="94">
+          <caret line="120" column="13" selection-start-line="120" selection-start-column="8" selection-end-line="120" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/multiprocessing/queues.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="104" column="32" selection-start-line="104" selection-start-column="32" selection-end-line="104" selection-end-column="32" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/queue.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="12" column="11" selection-start-line="12" selection-start-column="6" selection-end-line="12" selection-end-column="11" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/pickle.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="139">
+          <caret line="1581" column="4" selection-start-line="1581" selection-start-column="4" selection-end-line="1581" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/encodings/cp1252.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="96">
+          <caret line="22" column="0" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/players/blue_player.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="15" column="16" selection-start-line="15" selection-start-column="16" selection-end-line="15" selection-end-column="16" />
+        <state relative-caret-position="282">
+          <caret line="388" column="90" selection-start-line="388" selection-start-column="90" selection-end-line="388" selection-end-column="90" />
           <folding>
             <element signature="e#0#22#0" expanded="true" />
-            <element signature="e#4148#4526#0" expanded="false" />
-            <element signature="e#4583#7443#0" expanded="false" />
-            <element signature="e#7501#7789#0" expanded="false" />
-            <element signature="e#7849#8148#0" expanded="false" />
-            <element signature="e#8207#8493#0" expanded="false" />
-            <element signature="e#8852#9579#0" expanded="false" />
-            <element signature="e#9606#9843#0" expanded="false" />
-            <element signature="e#9866#9881#0" expanded="false" />
-            <element signature="e#9944#16389#0" expanded="false" />
-            <element signature="e#24874#25821#0" expanded="false" />
-            <element signature="e#25879#29207#0" expanded="false" />
-            <element signature="e#40129#40459#0" expanded="false" />
-            <element signature="e#40542#41269#0" expanded="false" />
-            <element signature="e#41294#41709#0" expanded="false" />
-            <element signature="e#41735#44802#0" expanded="false" />
-            <element signature="e#44850#45678#0" expanded="false" />
-            <element signature="e#45702#46331#0" expanded="false" />
+            <element signature="e#5198#5521#0" expanded="false" />
+            <element signature="e#5644#5954#0" expanded="false" />
+            <element signature="e#7736#8470#0" expanded="false" />
+            <element signature="e#8576#9310#0" expanded="false" />
+            <element signature="e#13154#15683#0" expanded="false" />
+            <element signature="e#15785#16611#0" expanded="false" />
+            <element signature="e#16692#18873#0" expanded="false" />
+            <element signature="e#22082#24171#0" expanded="false" />
+            <element signature="e#28231#28550#0" expanded="false" />
+            <element signature="e#28610#28709#0" expanded="false" />
+            <element signature="e#28749#29127#0" expanded="false" />
+            <element signature="e#29185#32045#0" expanded="false" />
+            <element signature="e#32103#32391#0" expanded="false" />
+            <element signature="e#32451#32750#0" expanded="false" />
+            <element signature="e#32809#33095#0" expanded="false" />
+            <element signature="e#33454#34181#0" expanded="false" />
+            <element signature="e#34208#34445#0" expanded="false" />
+            <element signature="e#34468#34483#0" expanded="false" />
+            <element signature="e#34546#40991#0" expanded="false" />
+            <element signature="e#41287#64069#0" expanded="false" />
+            <element signature="e#44890#47101#0" expanded="false" />
+            <element signature="e#47155#49432#0" expanded="false" />
+            <element signature="e#50481#53809#0" expanded="false" />
+            <element signature="e#53871#54609#0" expanded="false" />
+            <element signature="e#54680#64069#0" expanded="false" />
+            <element signature="e#64731#65061#0" expanded="false" />
+            <element signature="e#65144#65871#0" expanded="false" />
+            <element signature="e#65896#66311#0" expanded="false" />
+            <element signature="e#66337#69404#0" expanded="false" />
+            <element signature="e#69452#70280#0" expanded="false" />
+            <element signature="e#70304#70933#0" expanded="false" />
+            <marker date="1498327023182" expanded="false" signature="6093:7630" placeholder="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test_blue_player.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="332" column="0" selection-start-line="332" selection-start-column="0" selection-end-line="332" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+            <element signature="e#497#4342#0" expanded="false" />
+            <element signature="e#4586#6604#0" expanded="false" />
+            <element signature="e#6658#8842#0" expanded="false" />
+            <element signature="e#8937#9868#0" expanded="false" />
+            <element signature="e#11946#12753#0" expanded="false" />
+            <element signature="e#12810#13613#0" expanded="false" />
+            <element signature="e#16233#16517#0" expanded="false" />
+            <element signature="e#16561#16998#0" expanded="false" />
+            <marker date="1498334130342" expanded="false" signature="4380:6604" placeholder="..." />
+            <marker date="1498334130342" expanded="false" signature="10952:11893" placeholder="..." />
+            <marker date="1498334130342" expanded="false" signature="13650:16213" placeholder="..." />
           </folding>
         </state>
       </provider>
