@@ -162,10 +162,10 @@ class NextMoveClassifier():
         if (left_arm[2] == left_arm[1] == right_arm[1] == right_arm[2] == token) and (left_arm[0] == right_arm[0] == 0):
             return double_check_key
 
-        if (left_arm[2] == left_arm[1] == right_arm[0] == right_arm[2] == token) and (left_arm[0] == right_arm[1] == 0):
+        if (left_arm[1] == token == right_arm[0] == right_arm[2]) and (left_arm[0] == right_arm[1] == 0):
             return double_check_key
 
-        if (left_arm[2] == left_arm[0] == right_arm[1] == right_arm[2] == token) and (left_arm[1] == right_arm[0] == 0):
+        if (left_arm[2] == left_arm[0] == token == right_arm[1]) and (left_arm[1] == right_arm[0] == 0):
             return double_check_key
 
         # And now single-checks on this axis, possibly upgrading them to double-checks
