@@ -1888,7 +1888,7 @@ def interactive_play():
     print('GAME OVER')
 
 if __name__ == '__main__':
-
+    pass
 #    interactive_play()
 
 #    print(unfinished_games(1))

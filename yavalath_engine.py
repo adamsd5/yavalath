@@ -445,9 +445,13 @@ def get_player_in_process(player_name, module_filename):
 
 def battle(module_paths):
     modules = [load_module(filename) for filename in module_paths]
-    modules = [(name, get_player_names, get_player) for name, get_player_names, get_player in modules if name is not None]
+    good_modules = list()
     for name, get_player_names, get_player in modules:
-        print("Module joined: {}, with players {}".format(name, get_player_names()))
+        if name is None or get_player_names is None or get_player is None:
+            print("Missing something from module: {}".format((name, get_player_names, get_player)))
+        else:
+            print("Module joined: {}, with players {}".format(name, get_player_names()))
+    modules = good_modules
 
     player_info = list()
     #random.shuffle(modules)
@@ -474,6 +478,9 @@ def battle_mp(module_paths):
     player_info = list()
     for filename in module_paths:
         moudle_name, get_player_names, get_player = load_module(filename)
+        if moudle_name is None or get_player_names is None or get_player is None:
+            print("Invalid module loaded {}: {}, {}, {}".format(filename, moudle_name, get_player_names, get_player))
+            continue
         player_names = get_player_names()
         print("Module joined: {}, with players {}".format(moudle_name, player_names))
         for player_name in player_names:
