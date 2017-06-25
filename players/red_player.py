@@ -1647,7 +1647,7 @@ class CommonInterface(object):
         self.game_so_far = None
 
     def __call__(self, game_so_far):
-        self.move(game_so_far)
+        return self.move(game_so_far)
 
     def move(self, game_so_far):
         game_so_far = [x.lower() for x in game_so_far]
