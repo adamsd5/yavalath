@@ -74,6 +74,7 @@ import os
 import summary_results
 import multiprocessing
 from functools import partial
+import traceback
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -359,6 +360,7 @@ def battle_round(p1name, p1maker, p2name, p2maker, output_dir):
                 except Exception as ex:
                     print("Exception while taking a turn by {}".format(player_name), file=game_log)
                     print("Exception:{}".format(ex), file=game_log)
+                    print("Traceback:{}".format(traceback.format_exc()), file=game_log)
                     game_over = True
                     move_result = MoveResult.ERROR_WHILE_MOVING
                     break
@@ -411,7 +413,7 @@ def player_in_process(child_conn, moudule_filename, player_name):
                 print("Child Process, PID:{}, player:{}, move_so_far:{} returning {}".format(
                     os.getpid(), player_name, " ".join(move_so_far), next_move))
             except Exception as ex:
-                exception = str(ex)
+                exception = str(ex) + traceback.format_exc()
             child_conn.send((next_move, exception))
             if exception is not None:
                 break
