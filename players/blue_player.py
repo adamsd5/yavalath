@@ -147,6 +147,7 @@ class NextMoveClassifier():
         Only one of each color.  That's how to label the space.
         """
         properties = dict()
+        line = (left_arm[2], left_arm[1], left_arm[0], token, right_arm[0], right_arm[1], right_arm[2])
         win_key, lose_key, double_check_key, single_check_key = NextMoveClassifier.keys_for_token(token)
 
         # Detect outright wins
@@ -161,11 +162,19 @@ class NextMoveClassifier():
         if (left_arm[2] == left_arm[1] == right_arm[1] == right_arm[2] == token) and (left_arm[0] == right_arm[0] == 0):
             return double_check_key
 
+        if (left_arm[2] == left_arm[1] == right_arm[0] == right_arm[2] == token) and (left_arm[0] == right_arm[1] == 0):
+            return double_check_key
+
+        if (left_arm[2] == left_arm[0] == right_arm[1] == right_arm[2] == token) and (left_arm[1] == right_arm[0] == 0):
+            return double_check_key
+
         # And now single-checks on this axis, possibly upgrading them to double-checks
         if (left_arm[1] == token and left_arm[0] == 0 and right_arm[0] == token) \
                 or (left_arm[0] == token and right_arm[0] == 0 and right_arm[1] == token) \
                 or (left_arm[2] == left_arm[1] == token and left_arm[0] == 0) \
-                or (right_arm[2] == right_arm[1] == token and right_arm[0] == 0):
+                or (left_arm[2] == left_arm[0] == token and left_arm[1] == 0) \
+                or (right_arm[2] == right_arm[1] == token and right_arm[0] == 0) \
+                or (right_arm[2] == right_arm[0] == token and right_arm[1] == 0):
             return single_check_key
 
     @staticmethod
