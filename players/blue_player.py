@@ -164,8 +164,8 @@ class NextMoveClassifier():
         # And now single-checks on this axis, possibly upgrading them to double-checks
         if (left_arm[1] == token and left_arm[0] == 0 and right_arm[0] == token) \
                 or (left_arm[0] == token and right_arm[0] == 0 and right_arm[1] == token) \
-                or (left_arm[2] == left_arm[1] == token) \
-                or (right_arm[2] == right_arm[1] == token):
+                or (left_arm[2] == left_arm[1] == token and left_arm[0] == 0) \
+                or (right_arm[2] == right_arm[1] == token and right_arm[0] == 0):
             return single_check_key
 
     @staticmethod
@@ -209,8 +209,7 @@ class NextMoveClassifier():
         return black_result
 
     @staticmethod
-    def signature_to_arms(signature):
-        SIGNATURE_OFFSET = sum([3**i for i in range(18)])  # Add this to all signatures to make them >= 0.
+    def signature_index_to_arms(signature):
         tokens = list()
         for i in range(18):
             modulus = signature % 3
@@ -274,7 +273,6 @@ class NextMoveClassifier():
             result = (white_result, black_result)
 
         return e5_signature, result
-
 
     @staticmethod
     def find_wins_and_checks_for_token_and_opp_arms_slow(properties, left_arm, right_arm, token):
@@ -372,43 +370,45 @@ class NextMoveClassifier():
         return e5_signature, properties
 
     @staticmethod
-    def do_one_piece_of_work(arm1, arm2, arm_possibilities, signature_to_properties_index, all_properties_lists, verbose=False):
+    def do_one_piece_of_work(arm1, arm2, arm_possibilities, signature_to_properties_index, properties_table, verbose=False):
         """Iterate over all products where the last of 6 arms is fixed.  I can then parallelize the work based on
         that last arm value."""
         # Each process makes its own tables.  I'll write merge routines later.
         start = time.time()
-
         for i, arms in enumerate(itertools.product(arm_possibilities, arm_possibilities, arm_possibilities, arm_possibilities)):
             arms = list(arms)
             arms.append(arm1)
             arms.append(arm2)
             signature, properties = NextMoveClassifier.compute_signature_and_properties(arms)
             signature_index = NextMoveClassifier.SIGNATURE_OFFSET + signature
-            assert 0 <= signature_index < 2*NextMoveClassifier.SIGNATURE_OFFSET+1, "Invalid signature: {}".format(signature_index)
-            if properties not in all_properties_lists:
-                signature_to_properties_index[signature_index] = len(all_properties_lists)
-                all_properties_lists.append(properties)
-            else:
-                signature_to_properties_index[signature_index] = all_properties_lists.index(properties)
-
+            # assert 0 <= signature_index < 2*NextMoveClassifier.SIGNATURE_OFFSET+1, "Invalid signature: {}".format(signature_index)
+            # assert properties in properties_table, "Unforutnately, {} is not in the properties_table".format(properties)
+            signature_to_properties_index[signature_index] = properties_table.index(properties)
             if verbose and i % 10000 == 0:
                 print("PID:{}, Arms: {}, {}, Done with step {}, duration so far: {}".format(os.getpid(), arm1, arm2, i, time.time() - start))
 
-            # if i > 30000:
-            #     break
-            #
+    @staticmethod
+    @functools.lru_cache()
+    def all_valid_properties():
+        """This returns the list of all expected tuples that can come out of the compute_signature_and_properties function.
+        """
+        valid_black_properties = [None, SpaceProperies.BLACK_WIN, SpaceProperies.BLACK_LOSE, SpaceProperies.BLACK_SINGLE_CHECK, SpaceProperies.BLACK_DOUBLE_CHECK]        
+        valid_white_properties = [None, SpaceProperies.WHITE_WIN, SpaceProperies.WHITE_LOSE, SpaceProperies.WHITE_SINGLE_CHECK, SpaceProperies.WHITE_DOUBLE_CHECK]
+        result = [(SpaceProperies.GAME_OVER,)] + list(itertools.product(valid_white_properties, valid_black_properties))
+        return result
 
     @staticmethod
     def worker(worker_id, work_queue, done_queue):
         filename = "data/signature_table_worker_{}.dat".format(worker_id)
         filepath = pathlib.Path(filename)
+        properties_table = NextMoveClassifier.all_valid_properties()
         if not filepath.exists():
-            all_properties_lists = list()  # Indexed by the properties_index that is stored in signature_to_properties_index
-            signature_to_properties_index = numpy.zeros(2*NextMoveClassifier.SIGNATURE_OFFSET+1, dtype='i1')
+            signature_to_properties_index = numpy.zeros(2*NextMoveClassifier.SIGNATURE_OFFSET+1, dtype='i1') - 1 # Initialize everything to sentinel, -1
             print("This worker has not done work before.")
         else:
-            signature_to_properties_index, all_properties_lists = pickle.load(open(filepath.as_posix(), 'rb'))
-            print("Loaded the worker state {}, {}".format(len(signature_to_properties_index), len(all_properties_lists)))
+            signature_to_properties_index, loaded_properties_table = pickle.load(open(filepath.as_posix(), 'rb'))
+            assert loaded_properties_table == properties_table
+            print("Loaded the worker state {}, {}".format(len(signature_to_properties_index), len(properties_table)))
 
         one_arm_possibilities = list(itertools.product([-1,0,1], [-1,0,1], [-1,0,1]))
         verbose = True or (worker_id == 0)
@@ -417,9 +417,9 @@ class NextMoveClassifier():
                 task = work_queue.get(timeout=60)
                 print("Worker: {}, Starting {} at {} on PID: {}".format(worker_id, task, time.time(), os.getpid()))
                 arm1, arm2 = task
-                NextMoveClassifier.do_one_piece_of_work(arm1, arm2, one_arm_possibilities, signature_to_properties_index, all_properties_lists, verbose)
+                NextMoveClassifier.do_one_piece_of_work(arm1, arm2, one_arm_possibilities, signature_to_properties_index, properties_table, verbose)
                 with open(filepath.as_posix(), 'wb') as file_obj:
-                    pickle.dump(file=file_obj, obj=(signature_to_properties_index, all_properties_lists))
+                    pickle.dump(file=file_obj, obj=(signature_to_properties_index, properties_table))
                     print("Commit to file:{}".format(filename))
                 done_queue.put(task)
         except queue.Empty:
@@ -427,7 +427,10 @@ class NextMoveClassifier():
                 print("Queue is empty")
 
     @staticmethod
-    def compute_signature_table():
+    def compute_signature_table(tasks=None, processes=4):
+        """Starts a multi-processed computation of the signature/properties tables.  Data will be put in 'data/'.  If
+        'tasks' is passed in as an iterable of pairs of arms, that will be used instead of the full desired set of
+        27 x 27 arm paris."""
         # I also need to initialize the condition outcomes array.  This has 3**18 entries.  The product of a condition
         # vector and a board vector gives a value in [-N, N] where N = sum([3**i for i in range(18)]) = 193710244
         # Call this number the signature of the space, given the board.
@@ -446,17 +449,20 @@ class NextMoveClassifier():
         # Iterate over all possible sets of arms
         work_queue = multiprocessing.Queue()
         done_queue = multiprocessing.Queue()
-        one_arm_possibilities = list(itertools.product([-1,0,1], [-1,0,1], [-1,0,1]))
-        for arm1, arm2 in itertools.product(one_arm_possibilities, one_arm_possibilities):
-            task = (arm1, arm2)
-            if task not in done_tasks:
-                work_queue.put((arm1, arm2))  # Make 27*27 tasks
+        if tasks is None:
+            one_arm_possibilities = list(itertools.product([-1,0,1], [-1,0,1], [-1,0,1]))
+            for arm1, arm2 in itertools.product(one_arm_possibilities, one_arm_possibilities):
+                task = (arm1, arm2)
+                if task not in done_tasks:
+                    work_queue.put((arm1, arm2))  # Make 27*27 tasks
+        else:
+            for task in tasks:
+                work_queue.put(task)
 
         # Make some workers
-        processes = [multiprocessing.Process(target=NextMoveClassifier.worker, args=[id, work_queue, done_queue]) for id in range(4)]
+        processes = [multiprocessing.Process(target=NextMoveClassifier.worker, args=[id, work_queue, done_queue]) for id in range(processes)]
         for p in processes:
             p.start()
-
 
         while not work_queue.empty():
             try:
@@ -472,6 +478,17 @@ class NextMoveClassifier():
         for p in processes:
             p.join()
 
+        # One more pass to mark things as done
+        try:
+            while True:
+                done_task = done_queue.get(timeout=1)
+                done_tasks.append(done_task)
+                print("Waiter... done_task: {}".format(done_task))
+                with open(done_task_filepath.as_posix(), 'wb') as file_obj:
+                    pickle.dump(file=file_obj, obj=done_tasks)
+        except queue.Empty:
+            pass
+
         return True
 
     space_to_index = {space: i for i, space in enumerate(yavalath_engine.HexBoard().spaces)}
@@ -481,13 +498,18 @@ class NextMoveClassifier():
         self.verbose = verbose
         self.options = sorted(list(set(board.spaces) - set(game_so_far)))
         self.option_indices = set(range(len(self.options)))  # Column index into the potential move matrices
-        self.game_vec = moves_to_board_vector(game_so_far)
+        self.game_vec = moves_to_board_vector(game_so_far)[:NUMBER_OF_BOARD_SPACES]
 
         # Compute the condition matri.  I only care about condition vectors for empty spaces.
         all_condition_vectors = [self.get_condition_vector_for_space(o) for o in self.options]
         matrix_shape = (len(self.options), NUMBER_OF_BOARD_SPACES)
         self.condition_matrix = numpy.matrix(numpy.array(list(itertools.chain(*all_condition_vectors))).reshape(matrix_shape), dtype='i4')
-        signature_table, properties_table = NextMoveClassifier.compute_signature_table()
+
+        # Takes days to compute the table
+        #signature_table, properties_table = NextMoveClassifier.compute_signature_table()
+        self.signature_table, self.properties_table = pickle.load(open("signature_tables.dat", "rb"))
+        self.properties_table = numpy.array(self.properties_table)
+        self.signature_table = numpy.array(self.signature_table)
 
         # Populate the potential moves matrix.  Each column is a board-vector.  I'm not sure I need this.  My space
         # signatures tell me a lot about which moves to make.  The potential move matrices would indeed give me a one
@@ -508,26 +530,44 @@ class NextMoveClassifier():
         # white_CxP = self.condition_matrix * self.white_potential_moves
         # black_CxP = self.condition_matrix * self.black_potential_moves
         signatures = self.condition_matrix * self.game_vec # This is "no move"... get signatures for all options
-        move_properties = self.signature_table[signatures]
+        move_properties = self.properties_table[self.signature_table[signatures + NextMoveClassifier.SIGNATURE_OFFSET]]
 
-        self.moves_by_property = collections.defaultdict(list)
+
+        self.moves_by_property = collections.defaultdict(set)
         for option_index, properties in enumerate(move_properties):
-            for property_key, count in properties:
-                move_properties[property_key].append(option_index)
+            for property_key in properties:
+                for sub_key in property_key:
+                    self.moves_by_property[sub_key].add(option_index)
 
         if self.verbose:
-            try:
-                print("White Wins:{}".format([self.options[i] for i in self.white_winning_moves]))
-                print("White Single Checks:{}".format([self.options[i] for i in self.white_single_checks]))
-                print("White Multi Checks:{}".format([self.options[i] for i in self.white_multi_checks]))
-                print("White Losses:{}".format([self.options[i] for i in self.white_losing_moves]))
-                print("Black Wins:{}".format([self.options[i] for i in self.black_winning_moves]))
-                print("Black Single Checks:{}".format([self.options[i] for i in self.black_single_checks]))
-                print("Black Multi Checks:{}".format([self.options[i] for i in self.black_multi_checks]))
-                print("Black Losses:{}".format([self.options[i] for i in self.black_losing_moves]))
-            except:
-                pass
+            # pprint.pprint( sorted(signatures[numpy.nonzero(signatures)].flatten().tolist()[0]) )
+            # pprint.pprint(self.signature_table[signatures])
+            print("Moves by property:")
+            for key, option_index_list in self.moves_by_property.items():
+                if key is None:
+                    continue
+                option_list = [self.options[i] for i in option_index_list]
+                print("{}: {}".format(key, sorted(option_list)))
 
+    def compute_signature_and_properties_for_space(self, space):
+        """Uses the current board and target space to return the signature for that space, and the computed (not cached)
+        properties for that space.  This is for testing."""
+        arms = list()
+        board = yavalath_engine.HexBoard()
+        space_to_index = {space: i for i, space in enumerate(board.spaces)}
+        arms = list()
+        for direction in range(6):
+            arm = list()
+            for distance in range(3):
+                next_space = board.next_space_in_dir(space, direction, distance+1)
+                if next_space is None:
+                    token = 0
+                else:
+                    next_space_index = space_to_index[next_space]
+                    token = self.game_vec[next_space_index][0]
+                arm.append(token)
+            arms.append(tuple(arm))
+        return NextMoveClassifier.compute_signature_and_properties(tuple(arms))
 
 # ==== The linear condition vectors approach ===
 def spaces_to_board_vector(spaces, value):
