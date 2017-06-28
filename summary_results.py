@@ -37,8 +37,6 @@ def summarize(dir, outdir="summaries"):
                 names.add(p2)
             except Exception as ex:
                 raise RuntimeError("Failed to split:" + f.name) from ex
-            moves = eval(final_game.rstrip().split(":")[1])
-            image_name = f.name.replace(".log", ".png")
 
             player_name = last_line.split(" ")[0]
             opp_name = p1 if player_name == p2 else p2
@@ -123,7 +121,7 @@ def summarize(dir, outdir="summaries"):
 
     pdflatex=r"C:/Program Files/MiKTeX 2.9/miktex/bin/x64/pdflatex.exe"
     subprocess.call([pdflatex, "-output-directory", dir, "battle_summary.tex"])
-    shutil.copy("{}/battle_summary.pdf".format(dir), "{}/{}.summary.pdf".format(outdir, dir))
+    shutil.copy("{}/battle_summary.pdf".format(dir), "{}/{}.summary.pdf".format(outdir, pathlib.Path(dir).name))
 
 
 
@@ -132,15 +130,31 @@ def parse_args():
     parser.add_argument("--verbose", "-v", help="Verbose mode", default=False, action="store_true")
     return parser.parse_args()
 
+
+def main():
+    output_root = "official"
+    summarize("{}/battle_20170627_101017.627979".format(output_root), "{}/summaries".format(output_root))
+    return
+    for child in pathlib.Path(output_root).iterdir():
+        if child.name.startswith("battle_") and child.is_dir():
+            summarize(child.as_posix(), output_root)
+        summary_dir = "{}/summaries".format(output_root)
+        os.makedirs(summary_dir, exist_ok=True)
+        summarize(child.as_posix(), outdir=summary_dir)
+
+
 if __name__ == "__main__":
-    out_dir = "summaries_test"
-    #summarize("battle_20170611_221939.395223", outdir=out_dir)
-    #sys.exit(0)
-    for path in pathlib.Path(".").iterdir():
-        if path.name.find('battle_20') == 0 and path.is_dir():
-            try:
-                print("Summarizing:", path.name)
-                summarize(path.name, outdir=out_dir)
-            except Exception as ex:
-                print("Something went wrong with:", path.name, ex)
-                print("Exception:", ex)
+    main()
+    #
+    #
+    # out_dir = "summaries_test"
+    # #summarize("battle_20170611_221939.395223", outdir=out_dir)
+    # #sys.exit(0)
+    # for path in pathlib.Path(".").iterdir():
+    #     if path.name.find('battle_20') == 0 and path.is_dir():
+    #         try:
+    #             print("Summarizing:", path.name)
+    #             summarize(path.name, outdir=out_dir)
+    #         except Exception as ex:
+    #             print("Something went wrong with:", path.name, ex)
+    #             print("Exception:", ex)

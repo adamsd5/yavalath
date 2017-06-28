@@ -15,6 +15,13 @@ import pathlib
 import logging
 logger = logging.getLogger(__file__)
 
+# TODO: More classification should allow for more strategies.  TRIPLE_CHECK, for instance means there is only one space
+# allowed for blocking.  (You can prevent a DOUBLE_CHECK playing in 3 different spaces.)  It would be nice to include
+# in the properties the locations of the checks.  It is either arm[0], arm[1], or neither for the 6 arms, or 3^6 = 729 
+# possibilities.  That would make the properties table bigger than 256, so I'd need 2 bytes per signature.  That would
+# double the signature table size, but it would also open up more possibilities.  On second thought, I would need more.
+# I'd need checks for each color.  Just adding TRIPLE_CHECK would mean 37 entries in the properties table.
+# It might also be nice to know how many triangles are formed.  
 NUMBER_OF_BOARD_SPACES = 61
 class SpaceProperies(Enum):
     GAME_OVER = "GAME_OVER"
@@ -22,10 +29,12 @@ class SpaceProperies(Enum):
     WHITE_LOSE = "WHITE_LOSE"
     WHITE_SINGLE_CHECK = "WHITE_SINGLE_CHECK"
     WHITE_DOUBLE_CHECK = "WHITE_DOUBLE_CHECK"
+    WHITE_TRIPLE_CHECK = "WHITE_TRIPLE_CHECK"
     BLACK_WIN = "BLACK_WIN"
     BLACK_LOSE = "BLACK_LOSE"
     BLACK_SINGLE_CHECK = "BLACK_SINGLE_CHECK"
     BLACK_DOUBLE_CHECK = "BLACK_DOUBLE_CHECK"
+    BLACK_TRIPLE_CHECK = "BLACK_TRIPLE_CHECK"
 
 
 class NextMoveClassifier():
@@ -89,9 +98,14 @@ class NextMoveClassifier():
             white_result = SpaceProperies.WHITE_DOUBLE_CHECK
         else:
             check_count = arm_results.count(SpaceProperies.WHITE_SINGLE_CHECK)
-            if check_count > 1:
+            double_check_count = arm_results.count(SpaceProperies.WHITE_DOUBLE_CHECK)
+            total_check_count = 2*double_check_count + check_count
+            
+            if total_check_count > 2:
+                white_result = SpaceProperies.WHITE_TRIPLE_CHECK
+            elif total_check_count > 1:
                 white_result = SpaceProperies.WHITE_DOUBLE_CHECK
-            elif check_count == 1:
+            elif total_check_count == 1:
                 white_result = SpaceProperies.WHITE_SINGLE_CHECK
             else:
                 white_result = None
@@ -109,9 +123,14 @@ class NextMoveClassifier():
             black_result = SpaceProperies.BLACK_DOUBLE_CHECK
         else:
             check_count = arm_results.count(SpaceProperies.BLACK_SINGLE_CHECK)
-            if check_count > 1:
+            double_check_count = arm_results.count(SpaceProperies.BLACK_DOUBLE_CHECK)
+            total_check_count = 2*double_check_count + check_count
+            
+            if total_check_count > 2:
+                black_result = SpaceProperies.BLACK_TRIPLE_CHECK
+            elif total_check_count > 1:
                 black_result = SpaceProperies.BLACK_DOUBLE_CHECK
-            elif check_count == 1:
+            elif total_check_count == 1:
                 black_result = SpaceProperies.BLACK_SINGLE_CHECK
             else:
                 black_result = None
@@ -400,31 +419,48 @@ class NextMoveClassifier():
 
         return True
 
+    @staticmethod
+    @functools.lru_cache()
+    def load_signature_table():
+        filename = pathlib.Path(__file__).parent / "signature_table.dat"
+        print("Loading signature table from: {}.  Exists: {}".format(filename.as_posix(), filename.exists()))
+        return pickle.load(open(filename.as_posix(), "rb"))
+
+    @staticmethod
+    def get_board_properties(game_so_far, verbose=False):
+        c = NextMoveClassifier(game_so_far, verbose=verbose)
+        c.compute_moves_by_property()
+        return c.moves_by_property
+
     space_to_index = {space: i for i, space in enumerate(yavalath_engine.HexBoard().spaces)}
     SIGNATURE_OFFSET = sum([3**i for i in range(18)])  # Add this to all signatures to make them >= 0.
 
     def __init__(self, game_so_far, verbose=True):
         self.verbose = verbose
         self.options = sorted(list(set(yavalath_engine.HexBoard().spaces) - set(game_so_far)))
-        self.option_indices = set(range(len(self.options)))  # Column index into the potential move matrices
+        self.option_index_to_board_index = [NextMoveClassifier.space_to_index[s] for s in self.options]
+        self.open_option_indices = set(range(len(self.options)))  # Column index into the potential move matrices
         self.game_vec = common.moves_to_board_vector(game_so_far)[:NUMBER_OF_BOARD_SPACES]
 
-        # Compute the condition matri.  I only care about condition vectors for empty spaces.
+        # Compute the condition matrix.  I only care about condition vectors for empty spaces.
         all_condition_vectors = [self.get_condition_vector_for_space(o) for o in self.options]
         matrix_shape = (len(self.options), NUMBER_OF_BOARD_SPACES)
         self.condition_matrix = numpy.matrix(numpy.array(list(itertools.chain(*all_condition_vectors))).reshape(matrix_shape), dtype='i4')
 
+        # Initialize the signatures now.  Manage them with add_move/undo_move.
+        self.signatures = self.condition_matrix * self.game_vec
+
         # Takes days to compute the table
-        #signature_table, properties_table = NextMoveClassifier.compute_signature_table()
-        self.signature_table, self.properties_table = pickle.load(open("signature_table.dat", "rb"))
+        self.signature_table, self.properties_table = NextMoveClassifier.load_signature_table()
         self.properties_table = numpy.array(self.properties_table)
         self.signature_table = numpy.array(self.signature_table)
 
-    def compute_winning_and_losing_moves(self):
+        self.compute_moves_by_property()
+
+    def compute_moves_by_property(self):
         """Populate the move sets that will be useful for making decisions on how to move.
         Assumes black and white potential move matrices are current, and the condition_matrix is computed"""
-        signatures = self.condition_matrix * self.game_vec # This is "no move"... get signatures for all options
-        move_properties = self.properties_table[self.signature_table[signatures + NextMoveClassifier.SIGNATURE_OFFSET]]
+        move_properties = self.properties_table[self.signature_table[self.signatures + NextMoveClassifier.SIGNATURE_OFFSET]]
 
         self.moves_by_property = collections.defaultdict(set)
         for option_index, properties in enumerate(move_properties):
@@ -439,6 +475,32 @@ class NextMoveClassifier():
                     continue
                 option_list = [self.options[i] for i in option_index_list]
                 print("{}: {}".format(key, sorted(option_list)))
+
+    def add_move(self, option_index, token):
+        board_index = self.option_index_to_board_index[option_index]
+        # assert self.game_vec[board_index,0] == 0, "Attempting to add a move to a non-empty space: {}, {}".format(self.game_vec, board_index)
+        # assert option_index in self.open_option_indices, "Attept to add a move that is not available."
+        self.game_vec[board_index] = token
+        self.open_option_indices.remove(option_index)
+
+        # This is the logical: self.signatures = self.condition_matrix * self.game_vec
+        # Optimized, I only need to change by one row in the condition matrix
+        self.signatures += self.condition_matrix[:, board_index] * token  # Add the correct column, multiplied by the new token
+        # if numpy.max(self.signatures) + NextMoveClassifier.SIGNATURE_OFFSET >= 387420489:
+        #     raise Exception("Broken")
+        self.compute_moves_by_property()
+
+    def undo_move(self, option_index):
+        board_index = self.option_index_to_board_index[option_index]
+        # assert option_index not in self.open_option_indices, "Attept to add a undo a move that is already available."
+        self.open_option_indices.add(option_index)
+        token = self.game_vec[board_index][0]
+        # assert token in (-1, 1), "Attempting to remove a move from an empty space: {}, {}".format(self.game_vec, board_index)
+        self.game_vec[board_index] = 0
+        self.signatures -= self.condition_matrix[:, board_index] * token
+        # if numpy.max(self.signatures) + NextMoveClassifier.SIGNATURE_OFFSET >= 387420489:
+        #     raise Exception("Broken")
+        self.compute_moves_by_property()
 
     def compute_signature_and_properties_for_space(self, space):
         """Uses the current board and target space to return the signature for that space, and the computed (not cached)

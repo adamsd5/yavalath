@@ -155,6 +155,7 @@ def moves_to_board_string(moves):
 class Render:
     def __init__(self, board, moves):
         self.board = board
+
         self.edge_spaces = 5  # Maybe should be part of the board
         self.moves = moves
         if len(self.moves) > 1 and self.moves[1] == "swap":
@@ -340,11 +341,13 @@ def load_module(filename):
 
 
 def battle_round(p1name, p1maker, p2name, p2maker, output_dir):
+    from players.blue.classifiers import NextMoveClassifier, SpaceProperies
     board = HexBoard()
     with open("{}/{}_vs_{}.log".format(output_dir, p1name, p2name), "w") as game_log:
         player1 = p1maker(p1name)
         player2 = p2maker(p2name)
         game_history = list()
+        c = NextMoveClassifier([])
         game_over = False
         print("Yavalath, {} vs {}, starting at {}".format(p1name, p2name, datetime.datetime.now()), file=game_log)
         while not game_over:
@@ -355,8 +358,19 @@ def battle_round(p1name, p1maker, p2name, p2maker, output_dir):
                     move = player(game_history)
                     after = time.time()
                     turn_time = after - before
-                    print("Turn {} by {} moves at {}.  Time to decide: {:.03f}s".format(len(game_history), player_name, move, turn_time), file=game_log)
-                    print("Turn {} by {} moves at {}.  Time to decide: {:.03f}s".format(len(game_history), player_name, move, turn_time))
+
+                    # Determine if it was a check
+                    moves_by_property = NextMoveClassifier.get_board_properties(game_history + [move,])
+                    token = 1 if len(game_history) % 2 == 0 else -1
+                    # If there are wins for the player that just moved, it was a check
+                    property = SpaceProperies.WHITE_WIN if token == 1 else SpaceProperies.BLACK_WIN
+                    move_annotation = ""
+                    if len(moves_by_property[property]) > 0:
+                        move_annotation = "+"
+
+                    print("Turn {} by {} moves at {}.  Time to decide: {:.03f}s".format(len(game_history), player_name, move+move_annotation, turn_time), file=game_log)
+                    print("Turn {} by {} moves at {}.  Time to decide: {:.03f}s".format(len(game_history), player_name, move+move_annotation, turn_time))
+
                 except Exception as ex:
                     print("Exception while taking a turn by {}".format(player_name), file=game_log)
                     print("Exception:{}".format(ex), file=game_log)
@@ -380,6 +394,7 @@ def battle_round(p1name, p1maker, p2name, p2maker, output_dir):
             moves_to_render = game_history
         renderer = Render(HexBoard(), moves_to_render)
         renderer.render_image("{}/{}_vs_{}.png".format(output_dir, p1name, p2name))
+        summary_results.summarize(output_dir, "{}/../summaries".format(output_dir))
 
 
 MEMORY_LIMIT = 1024*1024*1024*4  # Everyone gets 4GB
@@ -409,7 +424,11 @@ def player_in_process(child_conn, moudule_filename, player_name):
             exception = None
             next_move = None
             try:
+
+                # TODO: Redirect stdout/stderr to file.
+                # HERE IS WHERE THE PLAYER CODE IS CALLED
                 next_move = player(move_so_far)
+
                 print("Child Process, PID:{}, player:{}, move_so_far:{} returning {}".format(
                     os.getpid(), player_name, " ".join(move_so_far), next_move))
             except Exception as ex:
@@ -473,7 +492,7 @@ def battle(module_paths):
 
     summary_results.summarize(output_dir)
 
-def battle_mp(module_paths):
+def battle_mp(module_paths, output_root="."):
     # player_info should become a list of pairs: (name, getter) such that getter(name) returns a player callable
     player_info = list()
     for filename in module_paths:
@@ -488,8 +507,9 @@ def battle_mp(module_paths):
             player_info.append((player_name, getter))
 
     #random.shuffle(player_info)
-    output_dir = "battle_{}".format(str(datetime.datetime.now()).replace(":", "").replace("-","").replace(" ", "_"))
+    output_dir = "{}/battle_{}".format(output_root, str(datetime.datetime.now()).replace(":", "").replace("-","").replace(" ", "_"))
     os.makedirs(output_dir)
+    print("Battling in: {}".format(output_dir))
 
     # player_info should be a list of tuples: (name, getter) such that getter(name) returns a player callable
     for p1info, p2info in itertools.combinations(player_info, r=2):
@@ -500,16 +520,20 @@ def battle_mp(module_paths):
         print("{} vs. {}".format(p2_name, p1_name))
         battle_round(p2_name, get_p2_fn, p1_name, get_p1_fn, output_dir)
 
-    summary_results.summarize(output_dir)
+    summary_dir = "{}/summaries".format(output_root)
+    os.makedirs(summary_dir, exist_ok=True)
+    summary_results.summarize(output_dir, outdir=summary_dir)
 
 
 def main():
-    module_names = [p.as_posix() for p in pathlib.Path("players").iterdir() if p.is_file()]
-    #module_names = ["players/blue_player.py"]
-    battle_mp(module_names)
-    return
-    while True:
-        battle_mp(module_names)
+    official_run = False
+    if official_run:
+        module_names = [p.as_posix() for p in pathlib.Path("players").iterdir() if p.is_file()]
+        while True:
+            battle_mp(module_names, output_root="official")
+    else:
+        module_names = ["players/blue_player.py"]
+        battle_mp(module_names, output_root="debug_battles")
 
 if __name__ == "__main__":
     main()

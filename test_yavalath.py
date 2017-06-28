@@ -16,6 +16,12 @@ class TestYavalath(unittest.TestCase):
 
         #['f8', 'd8', 'b6', 'f6', 'c1', 'd2', 'f3', 'g4', 'c2', 'd5', 'f4', 'e7', 'g6', 'e8', 'i5', 'h1', 'h4', 'd4', 'd6', 'a4', 'e4', 'h6', 'c3']
 
+    def test_renderer_debug(self):
+        move_stack = ['d2', 'b2', 'd4', 'f5', 'd5', 'd3', 'b5', 'c5', 'f1', 'e2', 'f2', 'a1', 'b1', 'c7', 'c6', 'e8', 'g6', 'f6', 'b6', 'd6', 'a3', 'g1']
+        game_so_far = ['g2', 'c2', 'g7', 'i5', 'd1', 'e6', 'c4', 'a2', 'b3', 'e5', 'g4', 'g5', 'c1'] + move_stack
+        yavalath_engine.Render(board=yavalath_engine.HexBoard(), moves=game_so_far).render_image("debug.png")
+
+
 class TestHexBoard(unittest.TestCase):
     def test_next_space(self):
         b = yavalath_engine.HexBoard()

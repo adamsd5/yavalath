@@ -8,6 +8,7 @@ import timeit
 import numpy
 import pathlib
 import itertools
+from players.blue.classifiers import NextMoveClassifier, SpaceProperies
 
 class TestNextMoveClassifier(unittest.TestCase):
     def setUp(self):
@@ -1250,7 +1251,7 @@ class TestNextMoveClassifier(unittest.TestCase):
         # Classify with the signature-file as well as the old 'gamestate' classifier, so that I can compare the things
         # they both do.
         classifier = blue_player.NextMoveClassifier(game_so_far=game_so_far)
-        classifier.compute_winning_and_losing_moves()
+        classifier.compute_moves_by_property()
         gamestate = blue_player.GameState(game_so_far=game_so_far)
 
         # Compare WINS and LOSE for both.  Note that the old classifier doesn't eliminate wins, so I subtract them away
@@ -1276,3 +1277,18 @@ class TestNextMoveClassifier(unittest.TestCase):
         self.assertEqual(new_signature, signature_index - SIGNATURE_OFFSET, "The signatures should be the same.")
         move_properties = self.properties_table[self.signature_table[signature_index]]
         self.assertEqual(properties, move_properties)
+
+    def test_board_analysis(self):
+        game_so_far = ['g1', 'd5', 'e7', 'b5', 'e1', 'e3', 'i4', 'g4', 'b6', 'e4', 'f5', 'a5', 'c5', 'e8', 'c3', 'd3', 'f4', 'd2']
+        m = NextMoveClassifier.get_board_properties(game_so_far)
+
+    def test_double_check_issue_(self):
+        game_so_far = ['c4', 'd8', 'c1', 'g7', 'c2', 'c3', 'e2', 'h1', 'f1', 'd2', 'd3', 'a4', 'f4', 'e4'] # , 'f2', 'f3', 'g2'
+        m = NextMoveClassifier.get_board_properties(game_so_far, verbose=True)
+        self.assertSetEqual(m[SpaceProperies.WHITE_DOUBLE_CHECK], set(), "In this game, white has no double-checks")
+
+    def test_add_remove(self):
+        c = NextMoveClassifier([], verbose=True)
+        c.add_move(0, 1)
+        c.undo_move(0)
+

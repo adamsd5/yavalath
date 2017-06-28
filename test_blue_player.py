@@ -341,9 +341,11 @@ def main9():
     # SpaceProperies.BLACK_LOSE: ['a5']
     # game_so_far = ['d3']
 
+    move_stack = ['d2', 'b2', 'd4', 'f5', 'd5', 'd3', 'b5', 'c5', 'f1', 'e2', 'f2', 'a1', 'b1', 'c7', 'c6', 'e8', 'g6', 'f6', 'b6', 'd6', 'a3', 'g1']
+    game_so_far = ['g2', 'c2', 'g7', 'i5', 'd1', 'e6', 'c4', 'a2', 'b3', 'e5', 'g4', 'g5', 'c1']
     yavalath_engine.Render(board=yavalath_engine.HexBoard(), moves=game_so_far).render_image("debug.png")
     classifier = blue_player.NextMoveClassifier(game_so_far, verbose=True)
-    classifier.compute_winning_and_losing_moves()
+    classifier.compute_moves_by_property()
 
 def regen_status():
     done_tasks = pickle.load(open("data/complete_tasks.dat", 'rb'))
